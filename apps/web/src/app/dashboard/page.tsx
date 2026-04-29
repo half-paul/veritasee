@@ -5,7 +5,7 @@ export default async function DashboardPage() {
   const { sessionClaims } = await auth();
   const user = await currentUser();
   const email = user?.primaryEmailAddress?.emailAddress ?? 'unknown';
-  const role = resolveRole(sessionClaims as { metadata?: { role?: unknown } } | null);
+  const role = resolveRole(sessionClaims);
 
   return (
     <main className="mx-auto max-w-2xl p-6">

@@ -62,6 +62,21 @@ PRD §3 roles map onto Clerk session metadata as follows:
 
 `resolveRole()` validates the claim and returns `contributor` for unknown / missing values so a malformed claim never silently grants elevated access.
 
+## Operational Setup
+
+Roles flow from Clerk to the app via session claims, but Clerk does **not** include `publicMetadata` on the session token by default. The Clerk dashboard's session token must be customised so `resolveRole()` can read the user's role:
+
+1. Clerk dashboard → **Sessions** → **Customize session token**.
+2. Add the following claim:
+   ```json
+   {
+     "metadata": "{{user.public_metadata}}"
+   }
+   ```
+3. Save. New sessions will then expose `sessionClaims.metadata.role`.
+
+Without this step, `resolveRole()` silently returns the default `contributor` for every signed-in user regardless of their actual `publicMetadata.role`.
+
 ## Migration Path
 
 If we move off Clerk:

@@ -13,7 +13,7 @@ export async function GET() {
     user: {
       id: userId,
       email: user?.primaryEmailAddress?.emailAddress ?? null,
-      role: resolveRole(sessionClaims as { metadata?: { role?: unknown } } | null),
+      role: resolveRole(sessionClaims),
     },
   });
 }
