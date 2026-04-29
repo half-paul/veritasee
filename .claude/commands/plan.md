@@ -34,7 +34,17 @@ Transform the input into a battle-tested implementation plan through codebase ex
 - **User Story**: As a [user], I want to [action], so that [benefit]
 - **Type**: NEW_CAPABILITY / ENHANCEMENT / REFACTOR / BUG_FIX
 - **Complexity**: LOW / MEDIUM / HIGH
-- **Jira Issue**: If a Jira issue key (e.g., `RH-5`) is available in the conversation context — from a prior `/prime` command, user mention, or PRD — capture it. This is optional but should be included in the plan metadata when available so that `/implement` can update the issue after completion.
+- **Linear Issue**: If a Linear issue identifier is available in the conversation context — from a prior `/prime` command, user mention, PRD, or `.agents/stories/*linear-issues.md` — capture it. For this project, identifiers usually look like `LEX-N`. This is optional but should be included in the plan metadata when available so that `/implement` can update the issue after completion.
+
+### Linear Issue Context
+
+If a Linear issue is provided or discoverable, use Claude Code's Linear MCP integration to read it before planning:
+
+1. Fetch the issue through the Linear MCP issue read tool, such as `get_issue`.
+2. Extract the issue title, description, acceptance criteria, labels, priority, project, and current state.
+3. Use that issue context as planning input and preserve traceability in the generated plan.
+
+Use Linear MCP for all issue manipulation in this project. If the input contains a legacy non-Linear issue key, treat it as stale metadata; look for a matching Linear issue in the conversation, branch name, PRD-derived Linear issue list, or ask the user only if no reasonable match can be found.
 
 ---
 
@@ -62,6 +72,16 @@ Use the Explore agent to find:
 ---
 
 ## Phase 3: DESIGN
+
+### Align with Project Architecture
+
+Use the Veritasee Override architecture documented in `docs/PRD.md` and `docs/general/SYSTEM-OVERVIEW.md`:
+
+- `apps/web` is the Next.js App Router application.
+- `packages` is for shared libraries only when the need is genuinely cross-app or cross-surface.
+- v1 should use a single Next.js API surface with managed Postgres, Redis, S3-compatible object storage, managed auth, and a thin AI provider router.
+- Browser extension work should remain separate from the web app surface when introduced.
+- Do not plan standalone services, public APIs, or alternative infrastructure unless the issue explicitly requires it and the plan documents the tradeoff.
 
 ### Map the Changes
 
@@ -107,7 +127,7 @@ So that {benefit}
 | Type | {type} |
 | Complexity | {LOW/MEDIUM/HIGH} |
 | Systems Affected | {list} |
-| Jira Issue | {issue key if available, e.g. RH-5, or "N/A"} |
+| Linear Issue | {issue identifier if available, e.g. LEX-5, or "N/A"} |
 
 ---
 
@@ -152,7 +172,7 @@ Execute in order. Each task is atomic and verifiable.
 - **Action**: CREATE / UPDATE
 - **Implement**: {what to do}
 - **Mirror**: `path/to/example.ts:lines` - follow this pattern
-- **Validate**: `pnpm run build`
+- **Validate**: `pnpm run typecheck`
 
 ### Task 2: {Description}
 
@@ -160,7 +180,7 @@ Execute in order. Each task is atomic and verifiable.
 - **Action**: CREATE / UPDATE
 - **Implement**: {what to do}
 - **Mirror**: `path/to/example.ts:lines`
-- **Validate**: `pnpm run build`
+- **Validate**: `pnpm run typecheck`
 
 {Continue for each task...}
 
@@ -170,13 +190,16 @@ Execute in order. Each task is atomic and verifiable.
 
 ```bash
 # Type check
-pnpm run build
+pnpm run typecheck
 
 # Lint
 pnpm run lint
 
+# Build
+pnpm run build
+
 # Tests
-pnpm test
+{test command if configured by the affected package; otherwise document "No test command configured yet"}
 ```
 
 ---

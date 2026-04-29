@@ -1,10 +1,7 @@
-Below is the converted **SKIL.md** adapted for **Linear** (Issues, Teams, Labels). All Jira-specific references have been removed or replaced.
-
----
 
 # Create Linear Issues from PRD
 
-Generate structured issues from a Product Requirements Document and optionally prepare them for Linear (manual or API import).
+Generate structured issues from a Product Requirements Document and optionally create them in Linear through Claude Code's Linear MCP integration.
 
 **Input**: $ARGUMENTS
 Source: 
@@ -152,26 +149,32 @@ Save output:
 
 ---
 
-## Phase 6: LINEAR INTEGRATION (Optional)
+## Phase 6: LINEAR MCP INTEGRATION (Optional)
 
-If using Linear API:
+If creating or updating Linear issues:
 
-1. Map fields:
+1. Confirm Linear MCP access and resolve the target team/project:
+
+   * Use `list_teams` or `get_team` for the target team
+   * Use `list_projects` or `get_project` for the target project when applicable
+   * Use `list_issue_labels` and `create_issue_label` for required labels
+   * Use `list_issue_statuses` to find the Backlog state
+
+2. Map fields for `create_issue`:
 
    * `title` → Issue title
    * `description` → Full markdown content
-   * `teamId` → DevOps / Dev / Support / Security
-   * `labels` → tags
+   * `teamId` → resolved Linear team
+   * `projectId` → resolved Linear project, if provided
+   * `labelIds` → resolved labels
    * `priority` → Linear priority
-   * `state` → Backlog
+   * `stateId` → Backlog state
 
-2. Create issues via API or CLI
+3. Create issues with Linear MCP `create_issue`.
 
-3. Link dependencies:
+4. Link dependencies with Linear MCP issue relation tools when available; otherwise add dependency notes as comments with `create_comment`.
 
-   * Use blocking relationships
-
-4. Report created issues:
+5. Report created issues:
 
 ```markdown
 ## Linear Issues Created

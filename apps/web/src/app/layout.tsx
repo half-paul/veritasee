@@ -1,4 +1,11 @@
 import type { Metadata } from 'next';
+import {
+  ClerkProvider,
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+} from '@clerk/nextjs';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -8,8 +15,23 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="antialiased">{children}</body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className="antialiased">
+          <header className="flex items-center justify-between border-b border-black/10 px-6 py-3">
+            <span className="font-semibold">Veritasee Override</span>
+            <div className="flex items-center gap-3">
+              <SignedOut>
+                <SignInButton mode="modal" />
+              </SignedOut>
+              <SignedIn>
+                <UserButton />
+              </SignedIn>
+            </div>
+          </header>
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
