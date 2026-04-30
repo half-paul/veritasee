@@ -1,6 +1,6 @@
 ---
 description: Learn how to build new API endpoints end-to-end
-argument-hint: [jira-issues] [confluence-pages]
+argument-hint: [linear-issues] [confluence-pages]
 ---
 
 # Prime Endpoint: How to Build New Endpoints
@@ -15,15 +15,16 @@ Understand the full endpoint pattern from database to UI so you can build new en
 
 ### Step 0: Load External Context (if provided)
 
-The first argument is an optional Jira issue key or comma-separated list of keys (e.g., `RH-5` or `RH-5,RH-6,RH-7`). The second argument is an optional Confluence page ID or comma-separated list of IDs (e.g., `123456` or `123456,789012`).
+The first argument is an optional Linear issue identifier or comma-separated list of identifiers (e.g., `LEX-5` or `LEX-5,LEX-6,LEX-7`). The second argument is an optional Confluence page ID or comma-separated list of IDs (e.g., `123456` or `123456,789012`).
 
-If Jira issues are provided:
-1. Call `mcp__atlassian__getAccessibleAtlassianResources` to get the `cloudId`
-2. For each issue key, call `mcp__atlassian__getJiraIssue` with `responseContentFormat: "markdown"` to fetch the issue summary, description, acceptance criteria, and any other relevant context
+If Linear issues are provided:
+1. Use Claude Code's Linear MCP integration to fetch each issue, such as with `get_issue`
+2. Extract the issue title, description, acceptance criteria, labels, priority, project, and current state
 3. Use this context to inform your understanding of what work is expected
+4. Use Linear MCP for all issue manipulation in this project
 
 If Confluence page IDs are provided:
-1. Call `mcp__atlassian__getAccessibleAtlassianResources` to get the `cloudId` (skip if already retrieved above)
+1. Call `mcp__atlassian__getAccessibleAtlassianResources` to get the `cloudId`
 2. For each page ID, call `mcp__atlassian__getConfluencePage` with `contentFormat: "markdown"` to fetch the page content
 3. Use this context as additional background for understanding the project
 

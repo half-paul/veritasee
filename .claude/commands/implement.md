@@ -28,7 +28,18 @@ Load the plan file and extract:
 - **Files to Change** - CREATE/UPDATE list
 - **Tasks** - Implementation order
 - **Validation Commands** - How to verify
-- **Jira Issue** - Check the plan's Metadata table for a Jira Issue key (e.g., `RH-5`). If present, this issue will be updated after implementation is complete.
+- **Linear Issue** - Check the plan's Metadata table for a Linear issue identifier (for this project, usually `LEX-N`). If present, this issue will be updated through the Linear MCP after implementation is complete.
+
+### Project Context to Honor
+
+This repository is the Veritasee Override monorepo:
+
+- `apps/web` is the Next.js App Router application.
+- `packages` is reserved for shared libraries as the system grows.
+- Product and architecture source of truth lives in `docs/PRD.md` and `docs/general/SYSTEM-OVERVIEW.md`.
+- The v1 architecture is a single Next.js API surface with managed services: Postgres, Redis, S3-compatible object storage, managed auth, and a thin AI provider router.
+- Prefer feature slices that match the PRD domains: proxy viewer, correction editor, AI verification, moderation/governance, quotas, and shared infrastructure.
+- Do not introduce standalone services, public APIs, or alternate architecture unless the plan explicitly justifies the deviation against the PRD.
 
 **If plan not found:**
 ```
@@ -65,6 +76,7 @@ Before writing any code for a task:
 
 - **Read the target file** you're about to create or modify
 - **Read adjacent files** — files it imports from, and files that import it
+- **Read relevant project docs** — for architecture-sensitive work, check `docs/PRD.md` and `docs/general/SYSTEM-OVERVIEW.md`
 - **Verify the plan's references** — do the functions, interfaces, tables, or endpoints the plan mentions actually exist? Do they match the plan's expectations?
 - **If assumptions are wrong**, adapt your approach before implementing. Document what differs from the plan.
 
@@ -73,13 +85,19 @@ Before writing any code for a task:
 - Read the **MIRROR** file reference and understand the pattern to follow
 - Make the change as specified in the plan
 - **Check integration**: verify your change connects correctly to adjacent code — do imports resolve? Do callers/callees still work? Does the data flow correctly across boundaries?
+- **Stay within the architecture**:
+  - App UI and routes belong under `apps/web/src/app`.
+  - Reusable code should move into `packages` only when there is a real cross-app/shared need.
+  - Backend work should start as Next.js route handlers/server actions unless the plan explicitly calls for a separate worker or package.
+  - Infrastructure clients should be thin wrappers around managed services named in the PRD.
+  - AI verification code must preserve the human-in-the-loop rule: AI may gather/summarize evidence, but it must not publish or auto-submit corrections.
 
 ### 3.3 Validate Immediately
 
 **After EVERY task:**
 
 ```bash
-pnpm run build
+pnpm run typecheck
 ```
 
 **If it fails:**
@@ -105,16 +123,18 @@ Task 2: UPDATE src/y.ts ✅
 
 ```bash
 # Type check
-pnpm run build
+pnpm run typecheck
 
 # Lint
 pnpm run lint
 
-# Tests
-pnpm test
+# Build
+pnpm run build
 ```
 
-**All must pass with zero errors.**
+**All configured checks must pass with zero errors.**
+
+If the plan or changed package defines a test command, run it as well. If no test command exists yet, document that explicitly in the report and add focused tests when the feature introduces meaningful logic or user-visible behavior.
 
 ### Write Tests
 
@@ -211,43 +231,46 @@ mv $ARGUMENTS .agents/plans/completed/
 
 ---
 
-## Phase 6: UPDATE JIRA (if issue specified in plan)
+## Phase 6: UPDATE LINEAR (if issue specified in plan)
 
-**This phase is mandatory if the plan's Metadata table contains a Jira Issue key.** Skip only if the Jira Issue field is "N/A" or absent.
+**This phase is mandatory if the plan's Metadata table contains a Linear Issue identifier.** Skip only if the Linear Issue field is `N/A` or absent.
 
-### 6.1 Resolve Cloud ID
+Claude Code has Linear MCP integration; use the Linear MCP tools for all issue reads, status changes, comments, labels, relations, and description updates.
 
-Call `mcp__atlassian__getAccessibleAtlassianResources` to get the `cloudId`.
+### 6.1 Fetch the Linear Issue
 
-### 6.2 Transition the Issue
+Call the Linear MCP issue read tool, such as `get_issue`, for the issue identifier from the plan metadata.
 
-1. Call `mcp__atlassian__getTransitionsForJiraIssue` with `cloudId` and `issueIdOrKey` to get available transitions — each transition has a numeric `id` and a `name`
-2. Find the most appropriate transition (prefer "In Review" or "In Progress"; fall back to "Done" if no review state exists)
-3. Call `mcp__atlassian__transitionJiraIssue` with:
-   - `cloudId`: The Cloud ID
-   - `issueIdOrKey`: The issue key
-   - `transition`: `{ "id": "{transition_id}" }` — use the numeric ID from step 1, NOT the status name
+Confirm:
+- The issue exists
+- The title/description still match the implemented scope
+- Current state, labels, project, and assignee
+
+### 6.2 Move the Issue to the Appropriate State
+
+Use Linear MCP status/state tools, such as `list_issue_statuses` and `update_issue`.
+
+Preferred state after implementation:
+1. `In Review` if available
+2. `Done` only if the project workflow treats implementation plus validation as completion
+3. Keep the current state if validation failed, and add a blocker comment instead
 
 ### 6.3 Add Implementation Comment
 
-Call `mcp__atlassian__addCommentToJiraIssue` with:
-- `issueIdOrKey`: The Jira issue key from the plan
-- `contentFormat`: `"markdown"`
-- `commentBody`: A summary including:
+Call the Linear MCP comment tool, such as `create_comment`, with a markdown summary including:
   - What was implemented
   - Branch name
   - Files created/updated (count)
   - Tests written (count)
+  - Validation commands run and results
   - Any deviations from the plan
   - Link to the implementation report file path
 
-### 6.4 Update Issue Description (if needed)
+### 6.4 Update Issue Fields (if needed)
 
-If the implementation resulted in meaningful deviations from the original issue description, call `mcp__atlassian__editJiraIssue` with:
-- `cloudId`: The Cloud ID
-- `issueIdOrKey`: The issue key
-- `contentFormat`: `"markdown"`
-- `fields`: An object with the fields to update, e.g. `{ "description": "updated description..." }`
+If the implementation resulted in meaningful deviations from the original issue description or acceptance criteria, call the Linear MCP update tool, such as `update_issue`, to update the description or labels.
+
+Preserve traceability to the PRD and implementation report. Do not overwrite acceptance criteria unless they are objectively stale; prefer an implementation comment for normal execution notes.
 
 ---
 
@@ -283,9 +306,9 @@ If the implementation resulted in meaningful deviations from the original issue 
 - Report: `.agents/reports/{name}-report.md`
 - Plan archived: `.agents/plans/completed/`
 
-### Jira
+### Linear
 
-{If issue was updated: "Updated {ISSUE_KEY}: transitioned to {status}, added implementation comment." Otherwise: "No Jira issue linked."}
+{If issue was updated: "Updated {ISSUE_KEY}: moved to {state}, added implementation comment." Otherwise: "No Linear issue linked."}
 
 ### Next Steps
 
