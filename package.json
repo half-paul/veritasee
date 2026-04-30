@@ -15,7 +15,8 @@
     "format": "node scripts/with-env.mjs prettier --write .",
     "format:check": "node scripts/with-env.mjs prettier --check .",
     "db:generate": "node scripts/with-env.mjs pnpm --filter @veritasee/db db:generate",
-    "db:migrate": "node scripts/with-env.mjs pnpm --filter @veritasee/db db:migrate"
+    "db:migrate": "node scripts/with-env.mjs pnpm --filter @veritasee/db db:migrate",
+    "redis:test": "node scripts/with-env.mjs pnpm --filter @veritasee/redis test"
   },
   "devDependencies": {
     "prettier": "^3.4.2",

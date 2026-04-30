@@ -1,0 +1,25 @@
+{
+  "name": "@veritasee/redis",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "node ../../scripts/with-env.mjs eslint .",
+    "typecheck": "node ../../scripts/with-env.mjs tsc --noEmit",
+    "test": "node ../../scripts/with-env.mjs vitest run"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.34.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "eslint": "^9.18.0",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.0"
+  }
+}

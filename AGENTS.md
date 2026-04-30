@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a pnpm workspace. The active application lives in `apps/web`, a Next.js App Router project using TypeScript, React, Tailwind CSS, and Clerk authentication. Shared packages should be added under `packages/`; it is currently only a placeholder. Project documentation is under `docs/`, including the PRD, ADRs, and system overview.
+This is a pnpm workspace. The active application lives in `apps/web`, a Next.js App Router project using TypeScript, React, Tailwind CSS, and Clerk authentication. Shared packages live under `packages/`: `@veritasee/db` wraps Neon Postgres + Drizzle, and `@veritasee/redis` wraps Upstash Redis (requires `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`). Project documentation is under `docs/`, including the PRD, ADRs, and system overview.
 
 Key paths:
 
