@@ -1,4 +1,7 @@
 import type { Config } from 'drizzle-kit';
+import { loadEnv } from './src/load-env';
+
+loadEnv();
 
 const url = process.env['DATABASE_URL_UNPOOLED'] ?? process.env['DATABASE_URL'];
 if (!url) {

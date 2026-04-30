@@ -10,12 +10,12 @@
     "./schema": "./src/schema/index.ts"
   },
   "scripts": {
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate.ts",
-    "db:studio": "drizzle-kit studio"
+    "lint": "node ../../scripts/with-env.mjs eslint .",
+    "typecheck": "node ../../scripts/with-env.mjs tsc --noEmit",
+    "test": "node ../../scripts/with-env.mjs vitest run",
+    "db:generate": "node ../../scripts/with-env.mjs drizzle-kit generate",
+    "db:migrate": "node ../../scripts/with-env.mjs tsx scripts/migrate.ts",
+    "db:studio": "node ../../scripts/with-env.mjs drizzle-kit studio"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.0",
