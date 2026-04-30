@@ -49,3 +49,6 @@ Thumbs.db
 *.pem
 .eslintcache
 .claude/.DS_Store
+
+# Drizzle local cache
+.drizzle/

@@ -1,0 +1,18 @@
+import type { Config } from 'drizzle-kit';
+import { loadEnv } from './src/load-env';
+
+loadEnv();
+
+const url = process.env['DATABASE_URL_UNPOOLED'] ?? process.env['DATABASE_URL'];
+if (!url) {
+  throw new Error('drizzle.config: set DATABASE_URL_UNPOOLED (or DATABASE_URL) before running drizzle-kit');
+}
+
+export default {
+  schema: './src/schema/index.ts',
+  out: './migrations',
+  dialect: 'postgresql',
+  dbCredentials: { url },
+  strict: true,
+  verbose: true,
+} satisfies Config;

@@ -7,13 +7,15 @@
     "node": ">=20.11"
   },
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter web build",
-    "start": "pnpm --filter web start",
-    "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "dev": "node scripts/with-env.mjs pnpm --filter web dev",
+    "build": "node scripts/with-env.mjs pnpm --filter web build",
+    "start": "node scripts/with-env.mjs pnpm --filter web start",
+    "lint": "node scripts/with-env.mjs pnpm -r lint",
+    "typecheck": "node scripts/with-env.mjs pnpm -r typecheck",
+    "format": "node scripts/with-env.mjs prettier --write .",
+    "format:check": "node scripts/with-env.mjs prettier --check .",
+    "db:generate": "node scripts/with-env.mjs pnpm --filter @veritasee/db db:generate",
+    "db:migrate": "node scripts/with-env.mjs pnpm --filter @veritasee/db db:migrate"
   },
   "devDependencies": {
     "prettier": "^3.4.2",

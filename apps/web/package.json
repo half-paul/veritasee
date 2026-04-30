@@ -3,14 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "dev": "node ../../scripts/with-env.mjs next dev",
+    "build": "node ../../scripts/with-env.mjs next build",
+    "start": "node ../../scripts/with-env.mjs next start",
+    "lint": "node ../../scripts/with-env.mjs eslint .",
+    "typecheck": "node ../../scripts/with-env.mjs tsc --noEmit"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.0.0",
+    "@veritasee/db": "workspace:*",
     "next": "^15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

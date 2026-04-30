@@ -1,0 +1,32 @@
+{
+  "name": "@veritasee/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts"
+  },
+  "scripts": {
+    "lint": "node ../../scripts/with-env.mjs eslint .",
+    "typecheck": "node ../../scripts/with-env.mjs tsc --noEmit",
+    "test": "node ../../scripts/with-env.mjs vitest run",
+    "db:generate": "node ../../scripts/with-env.mjs drizzle-kit generate",
+    "db:migrate": "node ../../scripts/with-env.mjs tsx scripts/migrate.ts",
+    "db:studio": "node ../../scripts/with-env.mjs drizzle-kit studio"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.0",
+    "drizzle-orm": "^0.36.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "drizzle-kit": "^0.28.0",
+    "eslint": "^9.18.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.0"
+  }
+}
