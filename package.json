@@ -16,7 +16,9 @@
     "format:check": "node scripts/with-env.mjs prettier --check .",
     "db:generate": "node scripts/with-env.mjs pnpm --filter @veritasee/db db:generate",
     "db:migrate": "node scripts/with-env.mjs pnpm --filter @veritasee/db db:migrate",
-    "redis:test": "node scripts/with-env.mjs pnpm --filter @veritasee/redis test"
+    "redis:test": "node scripts/with-env.mjs pnpm --filter @veritasee/redis test",
+    "storage:test": "node scripts/with-env.mjs pnpm --filter @veritasee/storage test",
+    "storage:apply-lifecycle": "node scripts/with-env.mjs pnpm --filter @veritasee/storage storage:apply-lifecycle"
   },
   "devDependencies": {
     "prettier": "^3.4.2",

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a pnpm workspace. The active application lives in `apps/web`, a Next.js App Router project using TypeScript, React, Tailwind CSS, and Clerk authentication. Shared packages live under `packages/`: `@veritasee/db` wraps Neon Postgres + Drizzle, and `@veritasee/redis` wraps Upstash Redis (requires `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`). Project documentation is under `docs/`, including the PRD, ADRs, and system overview.
+This is a pnpm workspace. The active application lives in `apps/web`, a Next.js App Router project using TypeScript, React, Tailwind CSS, and Clerk authentication. Shared packages live under `packages/`: `@veritasee/db` wraps Neon Postgres + Drizzle, `@veritasee/redis` wraps Upstash Redis (requires `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`), and `@veritasee/storage` wraps an S3-compatible object store (Cloudflare R2 or AWS S3) for snapshot and reference-asset persistence per PRD §14.1 (requires `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, plus `S3_FORCE_PATH_STYLE=true` for R2). Project documentation is under `docs/`, including the PRD, ADRs, and system overview.
 
 Key paths:
 
@@ -40,6 +40,8 @@ No dedicated test framework is configured yet. For now, treat `pnpm lint`, `pnpm
 Recent commits use short, imperative subjects, usually prefixed with a ticket ID, for example `LEX-64: integrate Clerk managed auth with role-based access`. Keep commits focused and avoid mixing formatting-only changes with feature work.
 
 Pull requests should include a concise description, linked issue or ticket, verification commands run, and screenshots for visible UI changes. Note any new environment variables or auth/configuration requirements.
+
+Linear issue lifecycle: `/implement` moves the linked issue to `In Review` once the PR is up. After the PR merges, run `/merge-followup <pr-number>` to advance the issue to `Done` and post a merge summary comment. Do not mark issues `Done` before merge.
 
 ## Security & Configuration Tips
 

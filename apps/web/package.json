@@ -13,6 +13,7 @@
     "@clerk/nextjs": "^6.0.0",
     "@veritasee/db": "workspace:*",
     "@veritasee/redis": "workspace:*",
+    "@veritasee/storage": "workspace:*",
     "next": "^15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
