@@ -250,10 +250,11 @@ Confirm:
 
 Use Linear MCP status/state tools, such as `list_issue_statuses` and `update_issue`.
 
-Preferred state after implementation:
-1. `In Review` if available
-2. `Done` only if the project workflow treats implementation plus validation as completion
-3. Keep the current state if validation failed, and add a blocker comment instead
+State after implementation:
+
+1. `In Review` once the PR is opened (or about to be opened). This is the target state for `/implement`.
+2. **Do not** move the issue to `Done` from this command — `Done` is owned by `/merge-followup`, which runs after the PR is merged.
+3. If validation failed, keep the current state and add a blocker comment instead of advancing the issue.
 
 ### 6.3 Add Implementation Comment
 
@@ -315,6 +316,7 @@ Preserve traceability to the PRD and implementation report. Do not overwrite acc
 1. Review the report
 2. Create PR: `gh pr create`
 3. Merge when approved
+4. After merge, run `/merge-followup {PR_NUMBER}` to move the Linear issue to Done
 ```
 
 ---
