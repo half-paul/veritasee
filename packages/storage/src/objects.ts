@@ -8,7 +8,6 @@ import { getBucket, getS3 } from './client';
 
 export interface PutObjectOptions {
   contentType?: string;
-  cacheControl?: string;
 }
 
 export async function putObject(
@@ -22,7 +21,6 @@ export async function putObject(
       Key: key,
       Body: body,
       ContentType: opts.contentType,
-      CacheControl: opts.cacheControl,
     }),
   );
 }

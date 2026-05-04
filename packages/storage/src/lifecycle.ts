@@ -3,6 +3,10 @@
 // Day-bucketed expiration: an object expires at the next midnight UTC after it
 // becomes Days old, so the wall-clock deletion window is roughly [0, 2*Days).
 // "24h" in the LEX-67 acceptance criterion is satisfied by Days = 1.
+//
+// Note: PutBucketLifecycleConfiguration replaces the bucket's full rule set.
+// If additional rules are added later, fold them into the Rules array here
+// (or read-modify-write) — otherwise this script will silently delete them.
 
 import { PutBucketLifecycleConfigurationCommand } from '@aws-sdk/client-s3';
 import { getBucket, getS3 } from './client';
