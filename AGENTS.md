@@ -10,6 +10,7 @@ Key paths:
 - `apps/web/src/lib/`: reusable application logic, including auth role helpers.
 - `apps/web/src/types/`: local TypeScript declaration files.
 - `docs/adr/`: architectural decision records.
+- `docs/general/DEPLOYMENT.md`: Vercel deployment and per-environment env-var setup (see ADR 0003).
 
 ## Build, Test, and Development Commands
 
