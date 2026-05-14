@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { getRedis } from '@veritasee/redis';
+import { withObservability } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+async function handler(_req: NextRequest) {
   try {
     const reply = await getRedis().ping();
     if (reply !== 'PONG') return NextResponse.json({ ok: false }, { status: 503 });
@@ -16,3 +17,5 @@ export async function GET() {
     );
   }
 }
+
+export const GET = withObservability(handler);

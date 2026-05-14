@@ -150,6 +150,34 @@ Provision **three buckets, one per environment**, with a dedicated credential pa
    ```
    Run once per bucket. Verify in S3 console → bucket → **Management → Lifecycle rules**. After confirming, you may strip `PutBucketLifecycleConfiguration` from the IAM policy for tighter least-privilege.
 
+#### Sentry — error reporting + tracing
+
+Error capture and per-request latency tracing are wired via [`@sentry/nextjs`](https://docs.sentry.io/platforms/javascript/guides/nextjs/) per [ADR 0004](../adr/0004-observability-baseline.md). All Sentry env vars are optional in local dev — if `SENTRY_DSN` is unset the SDK init is skipped silently and the structured request logger still emits to stdout.
+
+**Recommendation for v1: one Sentry project with `SENTRY_ENVIRONMENT` tagging** rather than one project per environment. Free-tier quotas are shared either way, and tag-based filtering in Sentry's UI is sufficient for v1 triage. Re-evaluate when error volume or per-team isolation requirements grow.
+
+| Key                       | Production                                          | Preview                                 | Development (local)                     |
+| ------------------------- | --------------------------------------------------- | --------------------------------------- | --------------------------------------- |
+| `SENTRY_DSN`              | server DSN from the Sentry project                  | same (tags by `SENTRY_ENVIRONMENT`)     | optional; from `.env.local`             |
+| `NEXT_PUBLIC_SENTRY_DSN`  | client DSN from the Sentry project                  | same                                    | optional; from `.env.local`             |
+| `SENTRY_ENVIRONMENT`      | `production` (or leave unset; falls back to `VERCEL_ENV`) | `preview`                          | `development`                           |
+| `SENTRY_ORG`              | Sentry org slug                                     | same                                    | unset                                   |
+| `SENTRY_PROJECT`          | Sentry project slug                                 | same                                    | unset                                   |
+| `SENTRY_AUTH_TOKEN`       | source-map upload token (Build scope only)          | same (Build scope only)                 | unset                                   |
+
+**`SENTRY_AUTH_TOKEN` scope is Build-only.** In Vercel's env-var settings, uncheck **Preview Runtime** and **Production Runtime**; leave only the **Build** scope checked. The token is needed by `withSentryConfig` at build time to upload source maps and is never required at runtime. Exposing it at runtime would let any process read it via `process.env`, which is the opposite of what we want for an auth token.
+
+**Trace sample rate.** `sentry.server.config.ts` and `sentry.edge.config.ts` apply a `tracesSampler` that drops `/api/health/*` probes (so uptime monitoring doesn't burn quota) and samples `0.2` in production / `0.05` in preview + development for everything else. Adjust these if Sentry quota becomes a constraint.
+
+**Provisioning steps:**
+
+1. Create a Sentry project at https://sentry.io (or your self-hosted instance). Pick the **Next.js** platform.
+2. From Project → Settings → **Client Keys (DSN)**, copy the DSN. Use the same DSN for both `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` (the SDK distinguishes runtimes; client-side bundles get `NEXT_PUBLIC_*` only).
+3. From User Settings → **Auth Tokens**, create a token with `project:releases` scope. Copy `SENTRY_AUTH_TOKEN`.
+4. In Vercel → Project → **Settings → Environment Variables**, add the six keys. Scope `SENTRY_AUTH_TOKEN` to **Build only** as noted above; scope all others to **Production + Preview**.
+5. (Optional) drop `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` into `apps/web/.env.local` if you want local errors to land in Sentry too.
+6. Verify: deploy, trigger an intentional error in a scratch API route, confirm the event lands in Sentry tagged with the matching `environment`.
+
 ## Verification
 
 After populating env vars, verify each acceptance criterion:
