@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.0.0",
+    "@sentry/nextjs": "^10.53.1",
     "@veritasee/db": "workspace:*",
     "@veritasee/redis": "workspace:*",
     "@veritasee/storage": "workspace:*",

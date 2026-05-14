@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { headBucket } from '@veritasee/storage';
+import { withObservability } from '@/lib/observability';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,7 +10,7 @@ interface HttpAwareError {
   message?: string;
 }
 
-export async function GET() {
+async function handler(_req: NextRequest) {
   try {
     await headBucket();
     return NextResponse.json({ ok: true });
@@ -23,3 +24,5 @@ export async function GET() {
     );
   }
 }
+
+export const GET = withObservability(handler);
