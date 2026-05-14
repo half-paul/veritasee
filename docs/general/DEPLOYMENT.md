@@ -81,9 +81,74 @@ Developers set `DATABASE_URL` and `DATABASE_URL_UNPOOLED` in `apps/web/.env.loca
 
 #### Object store (R2 or AWS S3)
 
-1. Provision a bucket in your provider per the env-var block in `apps/web/.env.example` (lines 36–48). Recommend per-environment buckets; if shared, namespace via path prefix.
-2. Create an access-key pair scoped to the bucket.
-3. Add `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET` (and `S3_FORCE_PATH_STYLE=true` for R2) to Vercel, scoped to the matching environment.
+The storage package (`@veritasee/storage`) speaks the S3 API and works against either provider with no code changes. Spec lives in [.agents/PRDs/lex-69-r2-bucket-provisioning.md](../../.agents/PRDs/lex-69-r2-bucket-provisioning.md); operational steps follow.
+
+**Recommendation: Cloudflare R2** (zero egress, free tier covers v1). Pick AWS S3 only if an AWS-native dependency (Lambda triggers, Athena, Object Lock, multi-region replication) is required.
+
+In both cases the env-var keys are identical — the **values** differ:
+
+| Key                    | Cloudflare R2                                            | AWS S3                                                |
+| ---------------------- | -------------------------------------------------------- | ----------------------------------------------------- |
+| `S3_ENDPOINT`          | `https://<account-id>.r2.cloudflarestorage.com`          | `https://s3.<region>.amazonaws.com`                   |
+| `S3_REGION`            | `auto`                                                   | actual AWS region, e.g. `us-east-1`                   |
+| `S3_ACCESS_KEY_ID`     | per-token (one per bucket)                               | per-IAM-user (one per bucket)                         |
+| `S3_SECRET_ACCESS_KEY` | per-token; shown once at creation                        | per-IAM-user; shown once at creation                  |
+| `S3_BUCKET`            | `veritasee-prod` / `veritasee-preview` / `veritasee-dev` | same                                                  |
+| `S3_FORCE_PATH_STYLE`  | `true` (required)                                        | unset or `false`                                      |
+
+Provision **three buckets, one per environment**, with a dedicated credential pair scoped to each. Sharing credentials across environments defeats isolation and is non-negotiable.
+
+##### Path A — Cloudflare R2
+
+1. **Enable R2.** [dash.cloudflare.com](https://dash.cloudflare.com) → **R2 Object Storage → Enable R2** (payment method required even on free tier). Note the **Account ID** in the right sidebar — same ID is used for all three environments.
+2. **Create three buckets.** **R2 → Create bucket** for each of `veritasee-prod`, `veritasee-preview`, `veritasee-dev`. Default storage class Standard, no jurisdiction, no public access.
+3. **Create one scoped API token per bucket.** **R2 → Manage R2 API Tokens → Create API Token**:
+   - Permissions: `Object Read & Write`.
+   - Specify bucket: pick the one bucket this token is for.
+   - On submit, Cloudflare displays the Access Key ID, Secret, and Endpoint **once**. Copy into a password manager immediately. Repeat for the other two buckets.
+4. **Add env vars in Vercel.** Project → **Settings → Environment Variables**. For each environment scope (Production, Preview, optionally Development), add the six keys from the R2 column above. Uncheck the other scopes on each save so credentials don't leak across environments.
+5. **Local `.env.local`.** In `apps/web/.env.local`, set the same six keys to the **dev** token's values pointing at `veritasee-dev`.
+6. **Apply lifecycle rules.** From repo root, with the bucket's credentials loaded:
+   ```bash
+   pnpm --filter @veritasee/storage storage:apply-lifecycle
+   ```
+   Run once per bucket. The script is idempotent but replaces the bucket's full rule set ([`lifecycle.ts:7-9`](../../packages/storage/src/lifecycle.ts#L7-L9)) — fold any extra rules into the script before running. Verify in R2 dashboard → bucket → **Settings → Object lifecycle rules**.
+
+##### Path B — AWS S3
+
+1. **Pick a region** (e.g. `us-east-1`). Use the same region for all three buckets.
+2. **Create three buckets.** Console → **S3 → Create bucket** for each of `veritasee-prod`, `veritasee-preview`, `veritasee-dev`. Bucket names are globally unique on AWS — if a name is taken, append a short suffix and use it for `S3_BUCKET`. For each: **Block Public Access = all blocked**, **Versioning = off** (v1), **Default encryption = SSE-S3 (AES-256)**.
+3. **Create one IAM user per bucket** with a scoped inline policy. IAM → Users → Create user (programmatic access only). Attach an inline policy of the form:
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": [
+           "s3:GetObject",
+           "s3:PutObject",
+           "s3:DeleteObject",
+           "s3:ListBucket",
+           "s3:GetBucketLifecycleConfiguration",
+           "s3:PutBucketLifecycleConfiguration"
+         ],
+         "Resource": [
+           "arn:aws:s3:::veritasee-prod",
+           "arn:aws:s3:::veritasee-prod/*"
+         ]
+       }
+     ]
+   }
+   ```
+   Replace the bucket name per user. Then **Security credentials → Create access key** and capture the pair once.
+4. **Add env vars in Vercel.** Per environment scope, add the six keys from the AWS S3 column above. Leave `S3_FORCE_PATH_STYLE` **unset**.
+5. **Local `.env.local`.** Drop the dev IAM user's credentials into `apps/web/.env.local`.
+6. **Apply lifecycle rules.** Same script:
+   ```bash
+   pnpm --filter @veritasee/storage storage:apply-lifecycle
+   ```
+   Run once per bucket. Verify in S3 console → bucket → **Management → Lifecycle rules**. After confirming, you may strip `PutBucketLifecycleConfiguration` from the IAM policy for tighter least-privilege.
 
 ## Verification
 
