@@ -15,6 +15,7 @@
     "@veritasee/db": "workspace:*",
     "@veritasee/redis": "workspace:*",
     "@veritasee/storage": "workspace:*",
+    "ipaddr.js": "^2.4.0",
     "next": "^15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
