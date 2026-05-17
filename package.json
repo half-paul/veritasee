@@ -16,12 +16,20 @@
     "format:check": "node scripts/with-env.mjs prettier --check .",
     "db:generate": "node scripts/with-env.mjs pnpm --filter @veritasee/db db:generate",
     "db:migrate": "node scripts/with-env.mjs pnpm --filter @veritasee/db db:migrate",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:smoke": "node scripts/with-env.mjs vitest run --workspace vitest.smoke.workspace.ts",
+    "e2e": "node scripts/with-env.mjs pnpm --filter web e2e",
+    "e2e:ui": "node scripts/with-env.mjs pnpm --filter web e2e:ui",
     "redis:test": "node scripts/with-env.mjs pnpm --filter @veritasee/redis test",
     "storage:test": "node scripts/with-env.mjs pnpm --filter @veritasee/storage test",
     "storage:apply-lifecycle": "node scripts/with-env.mjs pnpm --filter @veritasee/storage storage:apply-lifecycle"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.9",
     "prettier": "^3.4.2",
-    "prettier-plugin-tailwindcss": "^0.6.11"
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "vitest": "^2.1.9"
   }
 }
