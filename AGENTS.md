@@ -23,6 +23,11 @@ Run commands from the repository root unless noted.
 - `pnpm typecheck`: runs TypeScript checks with `tsc --noEmit`.
 - `pnpm format`: formats the repo with Prettier and the Tailwind plugin.
 - `pnpm format:check`: verifies formatting without changing files.
+- `pnpm test`: runs the Vitest unit suite across all workspaces (excludes smoke).
+- `pnpm test:watch`: unit tests in watch mode.
+- `pnpm test:coverage`: unit tests with v8 coverage reporter (no threshold enforced).
+- `pnpm test:smoke`: runs only `*.smoke.test.ts` — real Upstash/Neon/R2/MediaWiki; suites without env auto-skip.
+- `pnpm e2e`: runs the Playwright suite in `apps/web/e2e/` against `next dev` (Clerk test instance required for auth flows).
 
 Use Node `>=20.11` and pnpm `10.30.3`, as declared in `package.json`.
 
@@ -34,7 +39,13 @@ Formatting is handled by Prettier. Linting uses ESLint 9 with `next/core-web-vit
 
 ## Testing Guidelines
 
-No dedicated test framework is configured yet. For now, treat `pnpm lint`, `pnpm typecheck`, and `pnpm build` as the required verification set. When adding tests, colocate them near the code they cover or use a clear `tests/` directory, and use names such as `*.test.ts` or `*.test.tsx`.
+Veritasee uses Vitest for unit tests and Playwright for e2e. The required verification set is `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`. For full conventions, see `docs/general/TESTING.md`.
+
+- **Unit tests** are colocated next to source (`apps/web/src/**/*.test.ts`) or under `packages/<pkg>/test/`. They mock Upstash/Neon/S3/MediaWiki/Clerk at the boundary and require no secrets on a clean clone.
+- **Smoke tests** use the `*.smoke.test.ts` suffix, hit real services, and run only on demand via `pnpm test:smoke`. New smoke tests must skip when their env vars are absent.
+- **E2E tests** (`apps/web/e2e/*.spec.ts`) use Playwright with `@clerk/testing` fixtures. The anonymous specs run without secrets; session-dependent specs require Clerk test instance creds.
+- **New `lib/` modules or API routes ship with a test in the same PR.** Any new file under `apps/web/src/lib/**/!(*.test).ts` or `apps/web/src/app/api/**/route.ts` without an adjacent `.test.ts` fails review by default.
+- **Bug fixes ship a regression test.** Failing-then-passing test lands in the same PR as the fix.
 
 ## Commit & Pull Request Guidelines
 
