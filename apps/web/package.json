@@ -7,28 +7,40 @@
     "build": "node ../../scripts/with-env.mjs next build",
     "start": "node ../../scripts/with-env.mjs next start",
     "lint": "node ../../scripts/with-env.mjs eslint .",
-    "typecheck": "node ../../scripts/with-env.mjs tsc --noEmit"
+    "typecheck": "node ../../scripts/with-env.mjs tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.0.0",
+    "@mozilla/readability": "^0.5.0",
     "@sentry/nextjs": "^10.53.1",
     "@veritasee/db": "workspace:*",
     "@veritasee/redis": "workspace:*",
     "@veritasee/storage": "workspace:*",
     "ipaddr.js": "^2.4.0",
+    "jsdom": "^25.0.1",
     "next": "^15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.0.29",
     "@eslint/eslintrc": "^3.2.0",
+    "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.0.0",
+    "@types/jsdom": "^28.0.3",
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
+    "@vitest/coverage-v8": "^2.1.9",
     "eslint": "^9.18.0",
     "eslint-config-next": "^15.1.6",
+    "msw": "^2.14.6",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.9"
   }
 }
