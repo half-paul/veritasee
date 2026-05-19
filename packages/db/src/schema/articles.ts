@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { index, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import { index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 
 export const articles = pgTable(
   'articles',
@@ -7,11 +7,17 @@ export const articles = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     sourceUrl: text('source_url').notNull(),
     sourceDomain: text('source_domain').notNull(),
+    // Mirrors the snapshot pin used by FR-VW-5 drift detection. Updated on
+    // every live persist (including dedupe hits), so it reads as "last
+    // known origin hash" rather than "last hash that differed."
     currentRevisionHash: text('current_revision_hash'),
     topicTags: text('topic_tags')
       .array()
       .notNull()
       .default(sql`'{}'::text[]`),
+    // Updated on every successful live persist (including dedupe hits). Reads
+    // as "last time we re-validated against origin," not "last time content
+    // changed."
     lastFetchedAt: timestamp('last_fetched_at', { withTimezone: true }),
   },
   (t) => [
@@ -28,7 +34,10 @@ export const snapshots = pgTable(
       .notNull()
       .references(() => articles.id, { onDelete: 'cascade' }),
     revisionHash: text('revision_hash').notNull(),
-    content: text('content').notNull(),
+    // S3/R2 object key of the zstd-compressed snapshot envelope. PRD §14.1.
+    storageKey: text('storage_key').notNull(),
+    // Compressed byte count, used for the §14.1 200 GB budget telemetry.
+    sizeBytes: integer('size_bytes').notNull(),
     fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [uniqueIndex('snapshots_article_revision_key').on(t.articleId, t.revisionHash)],
