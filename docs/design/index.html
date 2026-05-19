@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Design system — Veritasee Override</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  /* hero strip */
+  .hero {
+    padding: 64px 32px 48px;
+    border-bottom: var(--rule-w-bold) solid var(--ink);
+    position: relative;
+  }
+  .hero .container { display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: end; }
+  .hero h1 {
+    font-size: clamp(64px, 9vw, 132px);
+    font-variation-settings: 'opsz' 144, 'SOFT' 70, 'WONK' 1, 'wght' 500;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+  }
+  .hero h1 em { color: var(--vermilion); font-style: italic; }
+  .hero .meta-card {
+    border: var(--rule-w) solid var(--rule);
+    padding: 20px 24px;
+    background: var(--paper);
+  }
+  .hero .meta-card .row {
+    display: grid; grid-template-columns: 110px 1fr;
+    gap: 16px;
+    padding: 7px 0;
+    border-bottom: var(--rule-w) dashed var(--rule);
+    font-family: var(--mono); font-size: 11.5px;
+  }
+  .hero .meta-card .row:last-child { border-bottom: 0; }
+  .hero .meta-card .row .k {
+    color: var(--ink-mute);
+    letter-spacing: 0.14em; text-transform: uppercase;
+    font-family: var(--ui); font-size: 10px; font-weight: 700;
+  }
+  .hero .meta-card .row .v { color: var(--ink); }
+
+  /* surface gallery */
+  .surfaces {
+    padding: 64px 32px;
+  }
+  .surface-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .surface-card {
+    border: var(--rule-w-bold) solid var(--ink);
+    background: var(--paper);
+    overflow: hidden;
+    transition: transform .15s, box-shadow .15s;
+    text-decoration: none;
+    color: inherit;
+    display: flex; flex-direction: column;
+  }
+  .surface-card:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 var(--paper-edge); }
+  .surface-card .head {
+    padding: 16px 22px;
+    background: var(--ink); color: var(--paper);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .surface-card .head .nm {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 36, 'SOFT' 60, 'WONK' 1, 'wght' 500;
+    font-size: 22px;
+  }
+  .surface-card .head .num {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ochre-soft); letter-spacing: 0.18em;
+  }
+
+  .surface-card .preview {
+    aspect-ratio: 16 / 9;
+    background: var(--paper-deep);
+    border-bottom: var(--rule-w) solid var(--rule);
+    position: relative;
+    overflow: hidden;
+    padding: 14px;
+  }
+  .surface-card .body {
+    padding: 18px 22px 22px;
+    flex: 1;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .surface-card p {
+    font-family: var(--reading);
+    font-size: 14.5px; line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  .surface-card .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .surface-card .footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 6px; padding-top: 10px;
+    border-top: var(--rule-w) solid var(--rule);
+    font-family: var(--ui); font-size: 11px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 700;
+  }
+  .surface-card .footer .tickets {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--vermilion); letter-spacing: 0.06em;
+    text-transform: none; font-weight: 500;
+  }
+  .surface-card .arrow {
+    font-family: var(--display); font-style: italic;
+    transition: transform .2s;
+  }
+  .surface-card:hover .arrow { transform: translateX(4px); }
+
+  /* schematic previews — tiny CSS illustrations of each surface */
+  .schem { width: 100%; height: 100%; position: relative; }
+  .schem .bar { background: var(--ink); }
+  .schem .ln { background: var(--rule); height: 1px; }
+  .schem .blk { background: var(--paper); border: 1px solid var(--rule); }
+
+  /* design tokens section */
+  .tokens {
+    background: var(--paper-deep);
+    padding: 64px 32px;
+    border-top: var(--rule-w-bold) solid var(--ink);
+  }
+  .tokens .container { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+  .tokens h2 {
+    font-size: 52px;
+    font-variation-settings: 'opsz' 72, 'SOFT' 60, 'WONK' 1, 'wght' 500;
+    line-height: 0.95; margin-bottom: 12px;
+    letter-spacing: -0.025em;
+  }
+  .tokens .group { border-top: var(--rule-w-bold) solid var(--ink); padding-top: 18px; margin-bottom: 28px; }
+  .tokens .group h3 {
+    font-family: var(--ui); font-size: 11px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ink-mute); font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .swatch-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .swatch {
+    border: var(--rule-w) solid var(--rule);
+    padding: 14px;
+    background: var(--paper);
+  }
+  .swatch .chip {
+    width: 100%; aspect-ratio: 4/2;
+    margin-bottom: 10px;
+  }
+  .swatch .nm {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 18, 'WONK' 0, 'wght' 500;
+    font-size: 14.5px;
+  }
+  .swatch .hx {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-mute);
+  }
+
+  .type-spec { display: flex; flex-direction: column; gap: 18px; }
+  .type-row {
+    padding: 16px;
+    border: var(--rule-w) solid var(--rule);
+    background: var(--paper);
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    gap: 18px;
+    align-items: center;
+  }
+  .type-row .meta {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-mute); line-height: 1.7;
+  }
+  .type-row .meta strong {
+    color: var(--ink); display: block;
+    font-family: var(--ui); font-size: 10.5px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700;
+  }
+  .type-row .specimen { color: var(--ink); }
+
+  /* components section */
+  .components {
+    padding: 64px 32px;
+    border-top: var(--rule-w-bold) solid var(--ink);
+  }
+  .components .grid-c {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 28px;
+  }
+  .components .demo {
+    border: var(--rule-w) solid var(--rule);
+    padding: 22px;
+    background: var(--paper);
+    min-height: 220px;
+    display: flex; flex-direction: column; gap: 14px; align-items: start;
+  }
+  .components .demo h4 {
+    font-family: var(--ui); font-size: 10.5px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-mute); font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .components .demo .demo-body {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%;
+  }
+  .components .demo .demo-foot {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mute);
+    margin-top: 6px;
+  }
+
+  /* roadmap strip */
+  .roadmap {
+    padding: 64px 32px;
+    background: var(--ink); color: var(--paper);
+  }
+  .roadmap h2 {
+    font-size: 48px;
+    font-variation-settings: 'opsz' 72, 'SOFT' 70, 'WONK' 1, 'wght' 500;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 28px;
+    color: var(--paper);
+  }
+  .roadmap h2 em { color: var(--vermilion); font-style: italic; }
+  .roadmap .lane-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: var(--rule-w) solid rgba(242,237,226,0.18);
+  }
+  .roadmap .lane {
+    padding: 22px 24px;
+    border-left: var(--rule-w) solid rgba(242,237,226,0.18);
+  }
+  .roadmap .lane:first-child { border-left: 0; }
+  .roadmap .lane .ln-head {
+    display: flex; align-items: baseline; gap: 12px;
+    border-bottom: var(--rule-w) solid rgba(242,237,226,0.18);
+    padding-bottom: 12px; margin-bottom: 14px;
+  }
+  .roadmap .lane .ln-head .ver {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 60, 'WONK' 1, 'wght' 500;
+    font-size: 36px; line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--ochre-soft);
+  }
+  .roadmap .lane .ln-head .ln-name {
+    font-family: var(--ui); font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(242,237,226,0.7);
+    font-weight: 700;
+  }
+  .roadmap .lane ul {
+    list-style: none;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .roadmap .lane li {
+    font-family: var(--reading); font-size: 14px;
+    line-height: 1.5;
+    color: rgba(242,237,226,0.85);
+    display: grid; grid-template-columns: 56px 1fr;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .roadmap .lane li .tkt {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ochre-soft);
+    letter-spacing: 0.06em;
+  }
+  .roadmap .lane li.done .tkt { color: rgba(95,165,124,0.9); }
+  .roadmap .lane li.done .body { color: rgba(242,237,226,0.55); text-decoration: line-through; text-decoration-color: rgba(242,237,226,0.18); }
+  .roadmap .lane li .body strong { color: var(--paper); font-weight: 500; }
+
+  @media (max-width: 1024px) {
+    .surface-grid, .tokens .container, .components .grid-c, .roadmap .lane-grid { grid-template-columns: 1fr; }
+    .hero .container { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="brand">
+    <span class="brand-mark">Veritasee<sup>°</sup></span>
+    <span class="brand-tag">Design specimens</span>
+  </div>
+  <nav>
+    <a href="index.html" class="active">Specimens</a>
+    <a href="landing.html">Landing</a>
+    <a href="reader.html">Reader</a>
+    <a href="editor.html">Editor</a>
+    <a href="moderator.html">Mod</a>
+    <a href="dashboard.html">Ledger</a>
+  </nav>
+  <div class="meta">
+    <span>v0.1 · MMXXVI</span>
+    <span class="sep">·</span>
+    <span>EDITORIAL MARGINALIA</span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <div>
+      <div class="eyebrow reveal delay-0"><span class="dot"></span>§ Design system &amp; surface gallery</div>
+      <h1 class="mt-3 reveal delay-1">Editorial<br/>marginalia<br/>for <em>a working<br/>encyclopedia.</em></h1>
+    </div>
+    <div class="meta-card reveal delay-2">
+      <div class="row"><span class="k">Concept</span><span class="v">Letterpress meets engineering ledger</span></div>
+      <div class="row"><span class="k">Display</span><span class="v">Fraunces · soft 70 · wonk 1</span></div>
+      <div class="row"><span class="k">Reading</span><span class="v">Newsreader · variable opsz</span></div>
+      <div class="row"><span class="k">UI</span><span class="v">Inter Tight · 600 / 700 caps</span></div>
+      <div class="row"><span class="k">Mono</span><span class="v">JetBrains Mono · ss01</span></div>
+      <div class="row"><span class="k">Canvas</span><span class="v">Parchment #F2EDE2 · ink #1A140C</span></div>
+      <div class="row"><span class="k">Accent</span><span class="v">Vermilion #C8331C · verdigris #2F4F3E · ochre #B8842B</span></div>
+      <div class="row"><span class="k">Motif</span><span class="v">Letterpress seal · margin glosses · STOP-PRESS bar</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- SURFACE GALLERY -->
+<section class="surfaces">
+  <div class="row between baseline mb-6">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>Six surfaces</div>
+      <h2 class="mt-3" style="font-size:48px; font-variation-settings:'opsz' 72,'SOFT' 60,'WONK' 1,'wght' 500; line-height:0.95;">The whole product, at a glance.</h2>
+    </div>
+    <p class="serif-body" style="max-width: 36ch; color: var(--ink-soft);">Six production-grade screens covering the reader, contributor, and moderator paths — plus a packaged design system to keep everything in tune.</p>
+  </div>
+
+  <div class="surface-grid">
+
+    <a class="surface-card" href="landing.html">
+      <div class="head">
+        <span class="nm">Landing &amp; URL entry</span>
+        <span class="num">01 / PUBLIC</span>
+      </div>
+      <div class="preview">
+        <div class="schem">
+          <div class="bar" style="position:absolute; top:0; left:0; right:0; height:8%;"></div>
+          <div style="position:absolute; left:6%; top:18%; right:6%; height:36%;">
+            <div style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 500,'opsz' 144,'SOFT' 70; font-size:42px; line-height:0.85; letter-spacing:-0.04em; color:var(--ink);">Encyclopedias<br/>are <span style="color:var(--vermilion); font-style:italic;">authored</span><br/>not <span style="color:var(--vermilion);">authoritative.</span></div>
+          </div>
+          <div style="position:absolute; left:6%; right:6%; bottom:24%; height:13%; border:1.5px solid var(--ink); background:var(--paper); display:flex; align-items:center; gap:10px; padding:0 10px; box-shadow: 4px 4px 0 var(--paper-edge);">
+            <span style="font-family:var(--mono); font-size:8px; color:var(--ink-mute);">https://…</span>
+            <span style="margin-left:auto; background:var(--vermilion); color:var(--paper); padding:3px 8px; font-family:var(--ui); font-size:8px; letter-spacing:0.14em; font-weight:700;">OPEN ↗</span>
+          </div>
+          <div style="position:absolute; left:6%; right:6%; bottom:8%; height:10%; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); display:grid; grid-template-columns:repeat(4,1fr);">
+            <div style="border-right:1px solid var(--rule); padding:6px;"><div style="font-family:var(--mono); font-size:7px; color:var(--vermilion);">01 / PROXY</div></div>
+            <div style="border-right:1px solid var(--rule); padding:6px;"><div style="font-family:var(--mono); font-size:7px; color:var(--vermilion);">02 / ANCHOR</div></div>
+            <div style="border-right:1px solid var(--rule); padding:6px;"><div style="font-family:var(--mono); font-size:7px; color:var(--vermilion);">03 / VERIFY</div></div>
+            <div style="padding:6px;"><div style="font-family:var(--mono); font-size:7px; color:var(--vermilion);">04 / GOVERN</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="body">
+        <p>Public reader entry. Magnetic hero, URL entry strip, sample-corrected article preview, the four roles, and a live ledger of today's corrections.</p>
+        <div class="tags">
+          <span class="pill"><span class="dot"></span>Replaces page.tsx</span>
+          <span class="pill"><span class="dot"></span>VS-020 · entry</span>
+        </div>
+        <div class="footer">
+          <span>Open landing</span>
+          <span class="arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="surface-card" href="reader.html">
+      <div class="head">
+        <span class="nm">Reader · proxy view</span>
+        <span class="num">02 / CORE</span>
+      </div>
+      <div class="preview">
+        <div class="schem">
+          <div class="bar" style="position:absolute; top:0; left:0; right:0; height:6%;"></div>
+          <div style="position:absolute; top:8%; left:0; right:0; height:7%; background:var(--vermilion); color:var(--paper); padding:6px 10px; font-family:var(--ui); font-size:8px; letter-spacing:0.18em; display:flex; align-items:center; gap:8px;"><strong>STOP PRESS</strong> · Source has changed</div>
+          <div style="position:absolute; top:18%; left:5%; right:32%; bottom:5%; padding:8px;">
+            <div style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 500; font-size:20px; line-height:1; margin-bottom:6px;">Ada Lovelace</div>
+            <div style="font-family:var(--reading); font-size:9px; line-height:1.5; color:var(--ink-soft);">
+              Augusta Ada King, Countess of Lovelace, was an English <span style="background:linear-gradient(180deg, transparent 60%, rgba(200,51,28,0.18) 60%);">mathematician</span> and writer, chiefly known for her work on Charles Babbage's <span style="background:linear-gradient(180deg, transparent 60%, rgba(47,79,62,0.20) 60%);">proposed mechanical general-purpose computer</span>, the Analytical Engine.
+              Her notes contain what is widely considered <span style="background:linear-gradient(180deg, transparent 60%, rgba(200,51,28,0.18) 60%);">the first algorithm</span> intended to be carried out by a machine.
+            </div>
+          </div>
+          <div style="position:absolute; top:18%; right:0; width:30%; bottom:5%; border-left:1px solid var(--rule); padding:8px; background-image: repeating-linear-gradient(180deg, transparent 0 14px, var(--rule-hair) 14px 14.5px);">
+            <div style="border:1px solid var(--rule); background:var(--paper); padding:6px; margin-bottom:6px; position:relative;">
+              <span style="position:absolute; top:-6px; left:-6px; width:16px; height:16px; background:var(--verdigris); color:var(--paper); border-radius:50%; display:grid; place-items:center; font-family:var(--display); font-size:8px;">1</span>
+              <div style="display:flex; justify-content:space-between; font-family:var(--ui); font-size:6px; letter-spacing:0.1em; margin-bottom:3px;"><span>VERITY 91</span><span style="color:var(--verdigris);">APPR</span></div>
+              <div style="font-family:var(--reading); font-size:7px; line-height:1.3;">Byron left England 25 April 1816 — four months after birth.</div>
+            </div>
+            <div style="border:1px solid var(--vermilion); background:var(--paper); padding:6px; box-shadow:-3px 0 0 var(--vermilion); position:relative;">
+              <span style="position:absolute; top:-6px; left:-6px; width:16px; height:16px; background:var(--vermilion); color:var(--paper); border-radius:50%; display:grid; place-items:center; font-family:var(--display); font-size:8px;">2</span>
+              <div style="display:flex; justify-content:space-between; font-family:var(--ui); font-size:6px; letter-spacing:0.1em; margin-bottom:3px;"><span>VERITY 28</span><span style="color:var(--vermilion);">REVIEW</span></div>
+              <div style="font-family:var(--reading); font-size:7px; line-height:1.3;">3× length figure is loose — closer to 2.5× by manuscript count.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="body">
+        <p>The defining surface: proxied article, marginalia of corrections, drift banner, Verity Score stamp, footnote click-through, anonymous flag-fab.</p>
+        <div class="tags">
+          <span class="pill"><span class="dot"></span>VS-021 · fetch</span>
+          <span class="pill"><span class="dot"></span>VS-025 · anchor</span>
+          <span class="pill"><span class="dot"></span>VS-027 · drift</span>
+          <span class="pill"><span class="dot"></span>VS-030 / 031</span>
+        </div>
+        <div class="footer">
+          <span>Open reader</span>
+          <span class="arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="surface-card" href="editor.html">
+      <div class="head">
+        <span class="nm">Contributor editor</span>
+        <span class="num">03 / AUTHORING</span>
+      </div>
+      <div class="preview">
+        <div class="schem">
+          <div class="bar" style="position:absolute; top:0; left:0; right:0; height:6%;"></div>
+          <div style="position:absolute; top:8%; left:0; right:0; height:5%; background:var(--paper-deep); border-bottom:1px solid var(--rule); display:flex; align-items:center; padding:0 10px; gap:4px;">
+            <span style="background:var(--ink); color:var(--paper); padding:2px 8px; font-family:var(--ui); font-size:6px; letter-spacing:0.16em;">DRAFT</span>
+            <span style="background:var(--vermilion); color:var(--paper); padding:2px 8px; font-family:var(--ui); font-size:6px; letter-spacing:0.16em;">SUBMITTED</span>
+            <span style="background:var(--paper-deep); color:var(--ink-mute); padding:2px 8px; font-family:var(--ui); font-size:6px; letter-spacing:0.16em;">APPROVED</span>
+          </div>
+          <div style="position:absolute; top:15%; left:0; right:0; bottom:0; display:grid; grid-template-columns: 1fr 1fr 32%;">
+            <div style="border-right:1px solid var(--rule); padding:8px; font-family:var(--reading); font-size:8px; line-height:1.5;"><div style="background:var(--paper); border-left:3px solid var(--ink); padding:6px;">Lovelace's notes are <span style="background:var(--ochre-soft); padding:0 2px;">approximately three times the length</span> of Menabrea's …</div></div>
+            <div style="border-right:1px solid var(--rule); padding:8px;">
+              <div style="border:1px solid var(--rule); background:var(--paper); padding:6px; font-family:var(--reading); font-size:8px; line-height:1.5; background-image: repeating-linear-gradient(180deg, transparent 0 13px, var(--rule-hair) 13px 13.5px);">Closer to <strong style="color:var(--vermilion);">2.5×</strong> by word count …</div>
+              <div style="margin-top:6px; height:8px; background:linear-gradient(to right, var(--vermilion) 0 33%, var(--ochre) 33% 66%, var(--verdigris) 66%); border:1.5px solid var(--ink); position:relative;">
+                <div style="position:absolute; left:72%; top:-2px; bottom:-2px; width:6px; background:var(--paper); border:1.5px solid var(--ink); transform:translateX(-50%);"></div>
+              </div>
+              <div style="font-family:var(--display); font-size:18px; font-variation-settings:'WONK' 1,'wght' 500; color:var(--ochre); text-align:right; margin-top:4px;">72<span style="font-family:var(--mono); font-size:7px; color:var(--ink-mute);">/100</span></div>
+            </div>
+            <div style="background:var(--paper-deep); padding:8px;">
+              <div style="display:grid; grid-template-columns:repeat(3,1fr); border:1px solid var(--rule);">
+                <div style="border-right:1px solid var(--rule); padding:4px; font-family:var(--display); font-size:7px;">Fast</div>
+                <div style="border-right:1px solid var(--rule); padding:4px; background:var(--ink); color:var(--paper); font-family:var(--display); font-size:7px;">Academic</div>
+                <div style="padding:4px; font-family:var(--display); font-size:7px;">Adver.</div>
+              </div>
+              <div style="margin-top:6px; background:var(--ink); color:var(--paper); padding:6px; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-family:var(--display); font-size:8px; font-variation-settings:'WONK' 1;">Claude Opus</span>
+                <span style="background:var(--vermilion); padding:2px 6px; font-family:var(--ui); font-size:6px; letter-spacing:0.16em;">VERIFY</span>
+              </div>
+              <div style="margin-top:6px; border:1px solid var(--rule); border-left:2px solid var(--verdigris); padding:5px; font-family:var(--reading); font-size:7px; font-style:italic; line-height:1.4;">"…the published version runs to roughly two and a half times the original…"</div>
+              <div style="margin-top:4px; border:1px solid var(--rule); border-left:2px solid var(--vermilion); padding:5px; font-family:var(--reading); font-size:7px; font-style:italic; line-height:1.4;">"Modern commentators consistently describe the Notes as three times…"</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="body">
+        <p>Side-by-side: source paragraph, correction editor, Verity slider with rationale, reference manager, AI Verify panel with scenarios and evidence trail. FR-AI-4 gate built in.</p>
+        <div class="tags">
+          <span class="pill"><span class="dot"></span>VS-050–053</span>
+          <span class="pill"><span class="dot"></span>VS-060–065</span>
+          <span class="pill"><span class="dot"></span>VS-067 / 068</span>
+        </div>
+        <div class="footer">
+          <span>Open editor</span>
+          <span class="arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="surface-card" href="moderator.html">
+      <div class="head">
+        <span class="nm">Moderator queue</span>
+        <span class="num">04 / GOVERNANCE</span>
+      </div>
+      <div class="preview">
+        <div class="schem">
+          <div class="bar" style="position:absolute; top:0; left:0; right:0; height:6%;"></div>
+          <div style="position:absolute; top:8%; left:0; right:0; height:13%; background:var(--ink); display:grid; grid-template-columns:repeat(4,1fr); color:var(--paper);">
+            <div style="border-right:1px solid rgba(242,237,226,0.1); padding:6px; display:flex; flex-direction:column; gap:2px;"><span style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 500; font-size:22px; line-height:1;">37</span><span style="font-family:var(--ui); font-size:6px; letter-spacing:0.16em; color:rgba(242,237,226,0.7);">PENDING · ALL</span></div>
+            <div style="border-right:1px solid rgba(242,237,226,0.1); padding:6px; display:flex; flex-direction:column; gap:2px;"><span style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 500; font-size:22px; line-height:1; color:var(--ochre-soft);">12</span><span style="font-family:var(--ui); font-size:6px; letter-spacing:0.16em; color:rgba(242,237,226,0.7);">IN SCOPE</span></div>
+            <div style="border-right:1px solid rgba(242,237,226,0.1); padding:6px; display:flex; flex-direction:column; gap:2px;"><span style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 500; font-size:22px; line-height:1;">17h</span><span style="font-family:var(--ui); font-size:6px; letter-spacing:0.16em; color:rgba(242,237,226,0.7);">MEDIAN AGE</span></div>
+            <div style="padding:6px; display:flex; flex-direction:column; gap:2px;"><span style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 500; font-size:22px; line-height:1; color:#E6907A;">3</span><span style="font-family:var(--ui); font-size:6px; letter-spacing:0.16em; color:rgba(242,237,226,0.7);">PAST SLA</span></div>
+          </div>
+          <div style="position:absolute; top:23%; left:0; right:0; bottom:0; display:grid; grid-template-columns: 28% 1fr 28%;">
+            <div style="border-right:1px solid var(--rule); padding:6px; display:flex; flex-direction:column; gap:4px;">
+              <div style="padding:4px; font-family:var(--display); font-size:8px; color:var(--ink); border-bottom:1px solid var(--rule);">— Tycho Brahe</div>
+              <div style="padding:4px; border-left:3px solid var(--vermilion); background:var(--paper-deep); font-family:var(--display); font-size:8px;">— Ada Lovelace</div>
+              <div style="padding:4px; font-family:var(--display); font-size:8px; color:var(--ink);">— Boltzmann</div>
+              <div style="padding:4px; font-family:var(--display); font-size:8px; color:var(--ink);">— Lascaux</div>
+              <div style="padding:4px; font-family:var(--display); font-size:8px; color:var(--vermilion);">— Tordesillas · SLA!</div>
+            </div>
+            <div style="border-right:1px solid var(--rule); padding:8px; display:flex; flex-direction:column; gap:4px;">
+              <div style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 500; font-size:13px; line-height:1;">3× length is closer to 2.5×</div>
+              <div style="border:1.5px solid var(--ink); display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:4px;">
+                <div style="padding:6px; border-right:1.5px solid var(--ink); font-family:var(--reading); font-size:7.5px; line-height:1.5;">Lovelace's notes are <span style="background:var(--ochre-soft);">three times the length</span>…</div>
+                <div style="padding:6px; background:var(--paper-deep); background-image: repeating-linear-gradient(180deg, transparent 0 11px, var(--rule-hair) 11px 11.5px); font-family:var(--reading); font-size:7.5px; line-height:1.5;">Closer to <strong style="color:var(--vermilion);">2.5×</strong> — Menabrea ~5,400 / Lovelace ~13,000 …</div>
+              </div>
+            </div>
+            <div style="background:var(--paper-deep); padding:6px; display:flex; flex-direction:column; gap:4px;">
+              <div style="padding:6px; background:var(--verdigris); color:var(--paper); font-family:var(--ui); font-size:7px; letter-spacing:0.16em; text-align:left; font-weight:700;">APPROVE · A</div>
+              <div style="padding:6px; border:1.5px solid var(--ochre); background:var(--paper); font-family:var(--ui); font-size:7px; letter-spacing:0.16em; font-weight:700;">NEEDS REVISION · R</div>
+              <div style="padding:6px; background:var(--vermilion); color:var(--paper); font-family:var(--ui); font-size:7px; letter-spacing:0.16em; font-weight:700;">REJECT · ⌘R</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="body">
+        <p>Three-column workbench: queue list, full-detail compare view with refs and AI trail, decision panel with keyboard shortcuts and full audit log.</p>
+        <div class="tags">
+          <span class="pill"><span class="dot"></span>VS-070 · queue UI</span>
+          <span class="pill"><span class="dot"></span>VS-071 · decisions</span>
+        </div>
+        <div class="footer">
+          <span>Open moderator</span>
+          <span class="arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="surface-card" href="dashboard.html">
+      <div class="head">
+        <span class="nm">Contributor ledger</span>
+        <span class="num">05 / IDENTITY</span>
+      </div>
+      <div class="preview">
+        <div class="schem">
+          <div class="bar" style="position:absolute; top:0; left:0; right:0; height:6%;"></div>
+          <div style="position:absolute; top:8%; left:0; right:0; bottom:0;">
+            <div style="padding:10px; font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 500,'opsz' 144,'SOFT' 70; font-size:28px; line-height:0.95;">Good morning,<br/><span style="color:var(--vermilion); font-style:italic;">p.reyes.</span></div>
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:0; border-top:1px solid var(--rule);">
+              <div style="background:var(--ink); color:var(--paper); padding:14px;">
+                <div style="font-family:var(--ui); font-size:6px; letter-spacing:0.16em; color:var(--ochre-soft);">TRUST POINTS</div>
+                <div style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 500,'opsz' 144,'SOFT' 80; font-size:60px; line-height:0.85; letter-spacing:-0.05em;">247<sup style="font-size:10px; color:var(--ochre-soft);">+16</sup></div>
+                <div style="border:1px solid rgba(242,237,226,0.18); padding:5px 7px; margin-top:6px; font-family:var(--ui); font-size:7px; letter-spacing:0.1em; color:rgba(242,237,226,0.7);">+ 53 UNTIL T1 AUTO-APPROVE</div>
+              </div>
+              <div style="border-left:1px solid var(--rule); padding:12px;">
+                <div style="font-family:var(--ui); font-size:6px; letter-spacing:0.16em;">QUOTA TODAY</div>
+                <div style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 500; font-size:18px; margin-top:4px;">4 <span style="font-family:var(--mono); font-size:7px; color:var(--ink-mute);">/ 10</span></div>
+                <div style="height:6px; background:var(--paper-deep); border:1px solid var(--rule); margin-top:4px;"><div style="height:100%; width:40%; background:linear-gradient(90deg, var(--verdigris), var(--ochre));"></div></div>
+                <div style="margin-top:8px; font-family:var(--mono); font-size:6px; color:var(--ink-mute);">resets 00:00 UTC</div>
+              </div>
+            </div>
+            <div style="padding:10px; display:grid; grid-template-columns: 14% repeat(8, 1fr); gap:2px;">
+              <span style="font-family:var(--ui); font-size:6px; letter-spacing:0.04em; align-self:center;">History</span>
+              <span style="aspect-ratio:1; background:rgba(47,79,62,0.2); border:1px solid var(--rule);"></span>
+              <span style="aspect-ratio:1; background:rgba(47,79,62,0.45); border:1px solid var(--rule);"></span>
+              <span style="aspect-ratio:1; background:rgba(47,79,62,0.2); border:1px solid var(--rule);"></span>
+              <span style="aspect-ratio:1; background:rgba(47,79,62,0.45); border:1px solid var(--rule);"></span>
+              <span style="aspect-ratio:1; background:rgba(47,79,62,0.75); border:1px solid var(--rule);"></span>
+              <span style="aspect-ratio:1; background:var(--verdigris); border:1px solid var(--rule);"></span>
+              <span style="aspect-ratio:1; background:var(--verdigris); border:1px solid var(--rule);"></span>
+              <span style="aspect-ratio:1; background:rgba(47,79,62,0.45); border:1px solid var(--rule);"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="body">
+        <p>Contributor dashboard: huge Trust Points stat with 180-day decay, AI quota meters, recent submissions table, 14-week topic heatmap, decision notifications, and settings.</p>
+        <div class="tags">
+          <span class="pill"><span class="dot"></span>FR-GV-3 · reputation</span>
+          <span class="pill"><span class="dot"></span>FR-LIM · quotas</span>
+          <span class="pill"><span class="dot"></span>BYOK</span>
+        </div>
+        <div class="footer">
+          <span>Open ledger</span>
+          <span class="arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+    <a class="surface-card" href="extension.html">
+      <div class="head">
+        <span class="nm">Browser extension popup</span>
+        <span class="num">06 / READER · OFF-SITE</span>
+      </div>
+      <div class="preview" style="display:grid; place-items:center; padding: 18px;">
+        <div style="width: 188px; background: var(--paper); border: 1.5px solid var(--ink); box-shadow: 6px 6px 0 var(--paper-edge);">
+          <div style="background: var(--ink); padding: 6px 8px; display:flex; align-items:center; gap:4px;">
+            <span style="width:5px;height:5px;background:rgba(242,237,226,0.18);"></span>
+            <span style="width:5px;height:5px;background:rgba(242,237,226,0.18);"></span>
+            <span style="width:5px;height:5px;background:rgba(242,237,226,0.18);"></span>
+            <span style="flex:1; font-family:var(--mono); font-size:6px; color:rgba(242,237,226,0.7); margin-left:4px;">en.wikipedia.org/Ada_…</span>
+            <span style="background:var(--vermilion); color:var(--paper); width:12px; height:12px; display:grid; place-items:center; font-family:var(--display); font-size:8px; font-variation-settings:'wght' 700;">V</span>
+          </div>
+          <div style="padding: 10px;">
+            <div style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 600,'opsz' 36; font-size:13px; border-bottom:1px solid var(--rule); padding-bottom:6px; margin-bottom:8px;">Veritasee°</div>
+            <div style="background:var(--ink); color:var(--paper); padding:8px; display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center;">
+              <span style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 500,'opsz' 60; font-size:28px; line-height:0.9;">5</span>
+              <span style="font-family:var(--ui); font-size:6px; letter-spacing:0.16em; color:rgba(242,237,226,0.7);">OVERRIDES<br/>ON THIS PAGE</span>
+              <span style="font-family:var(--display); font-variation-settings:'WONK' 1,'wght' 600; font-size:14px; color:var(--ochre-soft);">82</span>
+            </div>
+            <div style="margin-top:6px; display:flex; flex-direction:column; gap:3px;">
+              <div style="border-left:2px solid var(--verdigris); padding:4px; background:var(--paper-deep); font-family:var(--reading); font-size:7px; line-height:1.4;">§ Biography ¶1 — Byron left England April 1816 …</div>
+              <div style="border-left:2px solid var(--vermilion); padding:4px; background:var(--paper-deep); font-family:var(--reading); font-size:7px; line-height:1.4;">§ Notes ¶3 — 3× length is closer to 2.5× …</div>
+              <div style="border-left:2px solid var(--verdigris); padding:4px; background:var(--paper-deep); font-family:var(--reading); font-size:7px; line-height:1.4;">§ Legacy ¶1 — MIL-STD-1815 designation Dec 1980 …</div>
+            </div>
+            <div style="margin-top:6px; display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+              <div style="padding:4px; border:1px solid var(--rule); font-family:var(--ui); font-size:6px; letter-spacing:0.14em; text-align:center; font-weight:700;">FLAG</div>
+              <div style="padding:4px; background:var(--vermilion); color:var(--paper); font-family:var(--ui); font-size:6px; letter-spacing:0.14em; text-align:center; font-weight:700;">OPEN PROXY →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="body">
+        <p>Manifest V3 extension popup. Domain toggle, override count + verity stamp, scrollable correction list, jump-to-proxy, signed-in identity at bottom.</p>
+        <div class="tags">
+          <span class="pill"><span class="dot"></span>VS-040 · scaffold</span>
+          <span class="pill"><span class="dot"></span>VS-041 · inject</span>
+          <span class="pill"><span class="dot"></span>VS-042 · settings</span>
+        </div>
+        <div class="footer">
+          <span>Open extension preview</span>
+          <span class="arrow">→</span>
+        </div>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- DESIGN TOKENS -->
+<section class="tokens">
+  <div class="container">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>§ The vocabulary</div>
+      <h2 class="mt-3">Type &amp; ink.</h2>
+      <p class="serif-body" style="max-width: 36ch; color: var(--ink-soft); margin-top: 12px;">Two type families do the heavy lifting; one mono carries technical metadata; ink-on-parchment is the canvas; three accents do all the signaling work.</p>
+
+      <div class="group">
+        <h3>Display · Fraunces</h3>
+        <div class="type-spec">
+          <div class="type-row">
+            <span class="meta"><strong>H1 · 96–144</strong>opsz 144 · soft 70 · wonk 1</span>
+            <span class="specimen display" style="font-size: 48px; line-height: 0.95;">Encyclopedias <em style="color:var(--vermilion); font-style:italic;">authored.</em></span>
+          </div>
+          <div class="type-row">
+            <span class="meta"><strong>H2 · 48–72</strong>opsz 72 · soft 60 · wonk 1</span>
+            <span class="specimen display" style="font-size: 36px; line-height: 1;">Letterpress, with footnotes.</span>
+          </div>
+          <div class="type-row">
+            <span class="meta"><strong>H3 · 22–32</strong>opsz 36 · soft 50 · wonk 1</span>
+            <span class="specimen display" style="font-size: 24px;">Margins do the editorial work.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Reading · Newsreader</h3>
+        <div class="type-row">
+          <span class="meta"><strong>Body · 16–18</strong>opsz 18 · 1.6 line-height</span>
+          <span class="specimen serif-body">Lovelace's Notes A–G total approximately 13,000 words against Menabrea's ~5,400 — a ratio nearer to two-and-a-half than three.</span>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>UI · Inter Tight · Mono · JetBrains</h3>
+        <div class="type-row">
+          <span class="meta"><strong>Eyebrow / labels</strong>11–12 px · 0.18em tracking</span>
+          <span class="specimen eyebrow"><span class="dot"></span>SECTION · CORRECTION · ¶ 3</span>
+        </div>
+        <div class="type-row">
+          <span class="meta"><strong>Mono · technical</strong>JetBrains · ss01 · tnum</span>
+          <span class="specimen mono" style="font-size:14px; color:var(--ink);">rev <span style="color:var(--vermilion);">a4f2e1c83b</span> · sha256 verified · 2026·05·18 08:14 UTC</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow"><span class="dot"></span>§ Palette</div>
+      <h2 class="mt-3">The ink wells.</h2>
+
+      <div class="group">
+        <h3>Canvas &amp; ink</h3>
+        <div class="swatch-row">
+          <div class="swatch"><div class="chip" style="background:var(--paper);"></div><div class="nm">Parchment</div><div class="hx">#F2EDE2 — canvas</div></div>
+          <div class="swatch"><div class="chip" style="background:var(--paper-deep);"></div><div class="nm">Paper deep</div><div class="hx">#E8E0CF — sunk panel</div></div>
+          <div class="swatch"><div class="chip" style="background:var(--ink);"></div><div class="nm" style="color:var(--ink);">Ink</div><div class="hx">#1A140C — text</div></div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Signaling accents</h3>
+        <div class="swatch-row">
+          <div class="swatch"><div class="chip" style="background:var(--vermilion);"></div><div class="nm">Vermilion</div><div class="hx">#C8331C — correction</div></div>
+          <div class="swatch"><div class="chip" style="background:var(--verdigris);"></div><div class="nm">Verdigris</div><div class="hx">#2F4F3E — approved</div></div>
+          <div class="swatch"><div class="chip" style="background:var(--ochre);"></div><div class="nm">Ochre</div><div class="hx">#B8842B — caution</div></div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Auxiliary</h3>
+        <div class="swatch-row">
+          <div class="swatch"><div class="chip" style="background:var(--lapis);"></div><div class="nm">Lapis</div><div class="hx">#2B4870 — citation</div></div>
+          <div class="swatch"><div class="chip" style="background:var(--ink-mute);"></div><div class="nm">Ink mute</div><div class="hx">#786A52 — body 2</div></div>
+          <div class="swatch"><div class="chip" style="background:var(--paper-edge);"></div><div class="nm">Paper edge</div><div class="hx">#D8CEB6 — shadow</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPONENT SAMPLER -->
+<section class="components">
+  <div class="row between baseline">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>§ Component sampler</div>
+      <h2 class="mt-3" style="font-size:48px; font-variation-settings:'opsz' 72,'SOFT' 60,'WONK' 1,'wght' 500; line-height:0.95;">The reusable parts.</h2>
+    </div>
+    <p class="serif-body" style="max-width: 36ch; color: var(--ink-soft);">A handful of opinionated primitives carry every screen. None of them are bootstrap.</p>
+  </div>
+
+  <div class="grid-c">
+
+    <div class="demo">
+      <h4>§ Verity stamp</h4>
+      <div class="demo-body row gap-4">
+        <div class="verity-stamp low">
+          <svg class="ring" viewBox="0 0 100 100">
+            <defs><path id="c1" d="M50,50 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" fill="none"/></defs>
+            <text font-family="JetBrains Mono" font-size="7" letter-spacing="2.2" fill="currentColor">
+              <textPath href="#c1">VERITY · LOW · CORRECT · </textPath>
+            </text>
+          </svg>
+          <div class="core"><span class="num">28</span><span class="pct">PCT</span></div>
+        </div>
+        <div class="verity-stamp med">
+          <svg class="ring" viewBox="0 0 100 100">
+            <defs><path id="c2" d="M50,50 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" fill="none"/></defs>
+            <text font-family="JetBrains Mono" font-size="7" letter-spacing="2.2" fill="currentColor">
+              <textPath href="#c2">VERITY · MID · PARTIAL · </textPath>
+            </text>
+          </svg>
+          <div class="core"><span class="num">64</span><span class="pct">PCT</span></div>
+        </div>
+        <div class="verity-stamp high">
+          <svg class="ring" viewBox="0 0 100 100">
+            <defs><path id="c3" d="M50,50 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" fill="none"/></defs>
+            <text font-family="JetBrains Mono" font-size="7" letter-spacing="2.2" fill="currentColor">
+              <textPath href="#c3">VERITY · HIGH · SOLID · </textPath>
+            </text>
+          </svg>
+          <div class="core"><span class="num">91</span><span class="pct">PCT</span></div>
+        </div>
+      </div>
+      <div class="demo-foot">Hover spins the ring. Hue is the score signal.</div>
+    </div>
+
+    <div class="demo">
+      <h4>§ Buttons</h4>
+      <div class="demo-body col gap-3 center">
+        <button class="btn btn-vermilion">Submit for review <span class="arrow">→</span></button>
+        <button class="btn">Open overlay <span class="arrow">→</span></button>
+        <button class="btn btn-secondary">Preview as reader</button>
+        <button class="btn btn-ghost">Save draft</button>
+      </div>
+      <div class="demo-foot">Lift on hover with 3px ink shadow.</div>
+    </div>
+
+    <div class="demo">
+      <h4>§ Pills &amp; chips</h4>
+      <div class="demo-body col gap-2 center">
+        <span class="verity-chip high"><span class="num">94</span><span>Verity</span></span>
+        <span class="verity-chip med"><span class="num">61</span><span>Verity</span></span>
+        <span class="verity-chip low"><span class="num">22</span><span>Verity</span></span>
+        <div class="row gap-2 wrap" style="justify-content:center;">
+          <span class="pill outline-verdigris"><span class="dot"></span>Approved</span>
+          <span class="pill outline-vermilion"><span class="dot"></span>In review</span>
+          <span class="pill"><span class="dot"></span>Needs revision</span>
+          <span class="pill solid-ink"><span class="dot" style="background:var(--paper);"></span>Past SLA</span>
+        </div>
+      </div>
+      <div class="demo-foot">Inline verity (chip) vs. seal (stamp).</div>
+    </div>
+
+    <div class="demo">
+      <h4>§ Footnote markers</h4>
+      <div class="demo-body" style="align-self: stretch;">
+        <p class="serif-body" style="font-size: 17px; line-height: 1.6;">Babbage's Engine was famously incomplete<sup class="fn">1</sup>, but Lovelace's notes<sup class="fn">2</sup> survive in full at the British Library<sup class="fn">3</sup>.</p>
+      </div>
+      <div class="demo-foot">Vermilion superscript · click → margin scroll.</div>
+    </div>
+
+    <div class="demo">
+      <h4>§ Drift bar</h4>
+      <div class="demo-body" style="align-self: stretch;">
+        <div style="background:var(--vermilion); color:var(--paper); padding:10px 14px; display:flex; align-items:center; gap:12px; position:relative; overflow:hidden;">
+          <div style="position:absolute; inset:0; background-image: repeating-linear-gradient(-45deg, rgba(0,0,0,0) 0 8px, rgba(0,0,0,0.06) 8px 9px); pointer-events:none;"></div>
+          <div style="width:24px; height:24px; border:2px solid var(--paper); display:grid; place-items:center; font-family:var(--display); font-size:14px; font-variation-settings:'wght' 700,'WONK' 1; transform:rotate(-4deg); position:relative;">!</div>
+          <div style="font-family:var(--ui); font-size:9.5px; letter-spacing:0.18em; line-height:1.4; position:relative;"><strong style="display:block; font-size:11px; letter-spacing:0.16em;">STOP PRESS</strong>Source has changed since correction</div>
+        </div>
+      </div>
+      <div class="demo-foot">Reserved for source-drift events only.</div>
+    </div>
+
+    <div class="demo">
+      <h4>§ Submit state machine</h4>
+      <div class="demo-body row" style="font-family: var(--ui); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600;">
+        <span style="background:var(--ink); color:var(--paper); padding:6px 12px 6px 14px; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%); margin-right:-4px;">Draft</span>
+        <span style="background:var(--vermilion); color:var(--paper); padding:6px 12px 6px 18px; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%, 8px 50%); margin-right:-4px;">Submitted</span>
+        <span style="background:var(--paper-deep); color:var(--ink-mute); padding:6px 14px 6px 18px; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);">Approved · …</span>
+      </div>
+      <div class="demo-foot">Chevron tags · ink → vermilion → next.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section class="roadmap">
+  <div>
+    <div class="eyebrow"><span class="dot"></span>§ 11 — Rollout</div>
+    <h2 class="mt-3">From <em>specimen</em><br/>to <em>publication.</em></h2>
+  </div>
+
+  <div class="lane-grid">
+    <div class="lane">
+      <div class="ln-head">
+        <span class="ver">v1.0</span>
+        <span class="ln-name">Reader · MVP</span>
+      </div>
+      <ul>
+        <li class="done"><span class="tkt">VS-001</span><span class="body">Next.js + Tailwind scaffold</span></li>
+        <li class="done"><span class="tkt">VS-002</span><span class="body">Clerk auth + RBAC</span></li>
+        <li class="done"><span class="tkt">VS-003–07</span><span class="body">Postgres · Redis · R2 · Vercel · Sentry</span></li>
+        <li class="done"><span class="tkt">VS-020</span><span class="body">URL entry + validation</span></li>
+        <li class="done"><span class="tkt">VS-021–24</span><span class="body">Proxy fetch · cache · MediaWiki · Readability</span></li>
+        <li class="done"><span class="tkt">VS-025–26</span><span class="body">Text fragment anchor · snapshot persistence</span></li>
+        <li><span class="tkt">VS-027–31</span><span class="body"><strong>Drift banner · correction panel · chip</strong> · reader UI</span></li>
+        <li><span class="tkt">VS-032–33</span><span class="body">Anonymous flag · override read API</span></li>
+        <li><span class="tkt">VS-050–53</span><span class="body"><strong>Editor · slider · refs · state machine</strong></span></li>
+        <li><span class="tkt">VS-060–63</span><span class="body">AI provider abstraction + Claude · publishes-nothing gate</span></li>
+        <li><span class="tkt">VS-067–68</span><span class="body">Quota counter · quota-aware UI</span></li>
+        <li><span class="tkt">VS-070–71</span><span class="body"><strong>Moderator queue · decisions</strong></span></li>
+      </ul>
+    </div>
+
+    <div class="lane">
+      <div class="ln-head">
+        <span class="ver">v1.1</span>
+        <span class="ln-name">Open contributor</span>
+      </div>
+      <ul>
+        <li><span class="tkt">VS-040</span><span class="body">MV3 extension scaffold</span></li>
+        <li><span class="tkt">VS-041</span><span class="body">Content script · inject overlay</span></li>
+        <li><span class="tkt">VS-042</span><span class="body">Per-domain settings · opt-out</span></li>
+        <li><span class="tkt">VS-064–66</span><span class="body">Scenario presets · BYOK · cost telemetry</span></li>
+        <li><span class="tkt">VS-069</span><span class="body">Admin quota override</span></li>
+        <li><span class="tkt">FR-GV-3</span><span class="body">Reputation engine · 180-day decay</span></li>
+        <li><span class="tkt">FR-CE-3</span><span class="body">Cross-encyclopedia ref blocking</span></li>
+        <li><span class="tkt">FR-AI-2</span><span class="body">OpenRouter + multi-provider</span></li>
+      </ul>
+    </div>
+
+    <div class="lane">
+      <div class="ln-head">
+        <span class="ver">v1.2</span>
+        <span class="ln-name">Auto-approval</span>
+      </div>
+      <ul>
+        <li><span class="tkt">FR-GV-4</span><span class="body">T1 / T2 auto-approval thresholds</span></li>
+        <li><span class="tkt">FR-GV-4</span><span class="body">24h challenge / reversal window</span></li>
+        <li><span class="tkt">FR-GV-5</span><span class="body">Topic taxonomy · LLM routing</span></li>
+        <li><span class="tkt">§ 14.3</span><span class="body">Curated 14-topic seed list</span></li>
+        <li><span class="tkt">§ 14.2</span><span class="body">Trust-point formula admin UI</span></li>
+        <li><span class="tkt">post-12</span><span class="body">Public read-only API · re-evaluation</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer class="ledger-foot">
+  <div>VERITASEE · DESIGN SPECIMENS · v0.1 · MMXXVI</div>
+  <div>DRAFTED FOR PAUL · 2026·05·18</div>
+  <div>FRAUNCES · NEWSREADER · INTER TIGHT · JETBRAINS MONO</div>
+</footer>
+
+</body>
+</html>

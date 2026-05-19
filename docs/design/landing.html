@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Veritasee Override — The community-vetted correction layer</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  /* page-local */
+  .hero {
+    padding: 80px 0 56px;
+    border-bottom: var(--rule-w-bold) solid var(--ink);
+    position: relative;
+  }
+  .hero .container { display: grid; grid-template-columns: 7fr 5fr; gap: 64px; align-items: end; }
+  .hero-headline {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 144, 'SOFT' 70, 'WONK' 1, 'wght' 480;
+    font-size: clamp(72px, 11vw, 168px);
+    line-height: 0.88;
+    letter-spacing: -0.045em;
+    margin: 0;
+  }
+  .hero-headline em {
+    font-style: italic;
+    color: var(--vermilion);
+    font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1, 'wght' 380;
+  }
+  .hero-headline .cross {
+    position: relative; display: inline-block;
+  }
+  .hero-headline .cross::after {
+    content: ''; position: absolute;
+    left: -2%; right: -2%;
+    top: 56%;
+    height: 7px;
+    background: var(--vermilion);
+    transform: rotate(-2deg);
+    animation: strike 1.2s 0.4s cubic-bezier(0.6, 0.1, 0.2, 1) both;
+    transform-origin: left center;
+  }
+  @keyframes strike {
+    from { transform: scaleX(0) rotate(-2deg); }
+    to   { transform: scaleX(1) rotate(-2deg); }
+  }
+  .hero-side {
+    display: flex; flex-direction: column; gap: 28px;
+    padding-bottom: 20px;
+  }
+  .hero-side .lede {
+    font-family: var(--reading);
+    font-variation-settings: 'opsz' 36;
+    font-size: 22px;
+    line-height: 1.42;
+    color: var(--ink-soft);
+    max-width: 36ch;
+  }
+  .hero-side .lede em { color: var(--vermilion); font-style: italic; }
+
+  .hero-aside-pull {
+    position: absolute;
+    top: 38px; right: 32px;
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    color: var(--ink-mute);
+    line-height: 1.8;
+  }
+  .hero-aside-pull strong { color: var(--ink); }
+
+  /* URL entry strip */
+  .entry-strip {
+    margin-top: 56px;
+    border: var(--rule-w-bold) solid var(--ink);
+    padding: 28px 32px;
+    background: var(--paper);
+    display: grid; grid-template-columns: auto 1fr auto; gap: 28px; align-items: center;
+    box-shadow: 6px 6px 0 var(--paper-edge);
+    position: relative;
+  }
+  .entry-strip::before {
+    content: '¶'; position: absolute; left: -28px; top: 50%; transform: translateY(-50%);
+    font-family: var(--display); font-size: 38px; color: var(--vermilion);
+    font-style: italic;
+  }
+  .entry-strip .entry-label {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .entry-strip .entry-label .kicker {
+    font-family: var(--ui); font-size: 10px; letter-spacing: 0.24em;
+    text-transform: uppercase; color: var(--vermilion); font-weight: 700;
+  }
+  .entry-strip .entry-label .head {
+    font-family: var(--display);
+    font-size: 22px;
+    font-variation-settings: 'opsz' 36, 'WONK' 1;
+    line-height: 1;
+  }
+  .entry-strip input.url-input {
+    font-family: var(--mono);
+    font-size: 17px;
+    padding: 12px 0;
+    background: transparent;
+    border: 0;
+    border-bottom: var(--rule-w-bold) solid var(--ink);
+    width: 100%;
+    color: var(--ink);
+  }
+  .entry-strip input.url-input::placeholder { color: var(--ink-ghost); font-family: var(--mono); }
+
+  /* belt under entry */
+  .belt {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: var(--rule-w) solid var(--rule);
+    border-bottom: var(--rule-w) solid var(--rule);
+    margin-top: 56px;
+  }
+  .belt > * {
+    padding: 22px 28px;
+    border-left: var(--rule-w) solid var(--rule);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .belt > *:first-child { border-left: 0; }
+  .belt .belt-num {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--vermilion);
+    letter-spacing: 0.18em;
+  }
+  .belt .belt-text {
+    font-family: var(--reading); font-size: 14.5px;
+    line-height: 1.45; color: var(--ink-soft);
+  }
+
+  /* SECTION: how it works */
+  .principle {
+    padding: 96px 0 80px;
+  }
+  .principle .container { display: grid; grid-template-columns: 5fr 7fr; gap: 80px; }
+  .principle h2 {
+    font-size: clamp(48px, 6vw, 72px);
+    font-variation-settings: 'opsz' 96, 'SOFT' 60, 'WONK' 1, 'wght' 500;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+  }
+  .principle h2 em { color: var(--vermilion); font-style: italic; }
+  .principle .copy p {
+    font-family: var(--reading);
+    font-size: 19px;
+    font-variation-settings: 'opsz' 24;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  .principle .copy p + p { margin-top: 16px; }
+  .principle .copy p strong { color: var(--ink); font-weight: 500; }
+
+  /* SAMPLE ARTICLE STRIP — proof of concept */
+  .sample {
+    padding: 64px 0 80px;
+    background: linear-gradient(180deg, transparent 0, var(--paper-deep) 30%, var(--paper-deep) 70%, transparent 100%);
+  }
+  .sample .container { display: grid; grid-template-columns: 1fr; gap: 28px; }
+  .sample-frame {
+    background: var(--paper);
+    border: var(--rule-w-bold) solid var(--ink);
+    display: grid; grid-template-columns: minmax(0, 1fr) 340px;
+    overflow: hidden;
+  }
+  .sample-frame .stage {
+    padding: 36px 44px;
+    border-right: var(--rule-w) solid var(--rule);
+  }
+  .sample-frame .stage h3 {
+    font-size: 32px;
+    font-variation-settings: 'opsz' 60, 'SOFT' 40, 'WONK' 0;
+    line-height: 1.1; margin-bottom: 8px;
+  }
+  .sample-frame .stage .source-meta {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-mute);
+    margin-bottom: 22px;
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .sample-frame .stage p {
+    font-family: var(--reading);
+    font-variation-settings: 'opsz' 17;
+    font-size: 17px; line-height: 1.62;
+    color: var(--ink);
+  }
+  .sample-frame .stage p + p { margin-top: 14px; }
+  .sample-frame .stage mark.corrected {
+    background: linear-gradient(180deg, transparent 60%, rgba(200,51,28,0.16) 60%);
+    color: var(--ink);
+    padding: 0 2px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: var(--vermilion);
+    text-decoration-style: wavy;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 5px;
+  }
+  .sample-frame .margin {
+    padding: 36px 28px;
+    background: var(--paper);
+    background-image:
+      repeating-linear-gradient(180deg, transparent 0 27px, var(--rule-hair) 27px 27.5px);
+    display: flex; flex-direction: column; gap: 24px;
+  }
+  .margin-card {
+    border: var(--rule-w) solid var(--rule);
+    padding: 16px 16px 14px;
+    background: var(--paper);
+    box-shadow: var(--shadow-paper);
+    position: relative;
+  }
+  .margin-card .anchor {
+    position: absolute; top: -10px; left: -10px;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--vermilion); color: var(--paper);
+    display: grid; place-items: center;
+    font-family: var(--display);
+    font-variation-settings: 'wght' 600;
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(200,51,28,0.3);
+  }
+  .margin-card .meta-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px;
+  }
+  .margin-card .correction-body {
+    font-family: var(--reading);
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .margin-card .correction-body strong { color: var(--vermilion); }
+  .margin-card .citation {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: var(--rule-w) dashed var(--rule);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-mute);
+    line-height: 1.55;
+  }
+  .margin-card .citation a { color: var(--lapis); text-decoration: none; border-bottom: 1px solid var(--lapis); }
+
+  /* ROLES grid */
+  .roles { padding: 80px 0; border-top: var(--rule-w-bold) solid var(--ink); }
+  .roles .container { display: grid; grid-template-columns: 4fr 8fr; gap: 80px; }
+  .roles h2 {
+    font-size: 56px;
+    font-variation-settings: 'opsz' 72, 'SOFT' 60, 'WONK' 1, 'wght' 500;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+  }
+  .roles-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; border: var(--rule-w) solid var(--rule); }
+  .role-cell { padding: 24px; border: var(--rule-w) solid var(--rule); margin: -0.5px; min-height: 220px; display: flex; flex-direction: column; }
+  .role-cell:hover { background: var(--paper-deep); }
+  .role-cell .role-num {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--vermilion); letter-spacing: 0.18em;
+    margin-bottom: 14px;
+  }
+  .role-cell h4 {
+    font-size: 28px;
+    font-variation-settings: 'opsz' 36, 'SOFT' 40, 'WONK' 1;
+    line-height: 1; margin-bottom: 6px;
+  }
+  .role-cell .role-auth {
+    font-family: var(--ui); font-size: 10.5px; color: var(--ink-mute);
+    letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 14px;
+  }
+  .role-cell p {
+    font-family: var(--reading);
+    font-size: 14.5px; line-height: 1.5;
+    color: var(--ink-soft); flex: 1;
+  }
+  .role-cell .role-caps {
+    margin-top: 14px;
+    display: flex; flex-wrap: wrap; gap: 4px;
+  }
+
+  /* LEDGER feed */
+  .ledger {
+    padding: 80px 0;
+    border-top: var(--rule-w-bold) solid var(--ink);
+    background: var(--paper-deep);
+  }
+  .ledger .container { display: grid; grid-template-columns: 1fr; gap: 24px; }
+  .ledger-head { display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: 16px; }
+  .ledger-head h2 {
+    font-size: 56px;
+    font-variation-settings: 'opsz' 72, 'SOFT' 60, 'WONK' 1, 'wght' 500;
+    line-height: 0.95; letter-spacing: -0.03em;
+  }
+  .ledger-table {
+    background: var(--paper);
+    border: var(--rule-w-bold) solid var(--ink);
+  }
+  .ledger-row {
+    display: grid;
+    grid-template-columns: 88px 1.4fr 2.4fr 1fr 110px 110px;
+    align-items: center;
+    padding: 14px 20px;
+    gap: 18px;
+    border-bottom: var(--rule-w) solid var(--rule);
+    font-family: var(--ui);
+    font-size: 13px;
+    transition: background .15s;
+  }
+  .ledger-row:hover { background: var(--paper-deep); }
+  .ledger-row:last-child { border-bottom: 0; }
+  .ledger-row.head {
+    background: var(--ink); color: var(--paper);
+    font-family: var(--ui); font-size: 10.5px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700;
+  }
+  .ledger-row .l-time { font-family: var(--mono); font-size: 11px; color: var(--ink-mute); }
+  .ledger-row.head .l-time { color: var(--paper); }
+  .ledger-row .l-source { font-family: var(--display); font-size: 16px; font-variation-settings: 'opsz' 24, 'WONK' 0; }
+  .ledger-row .l-section { color: var(--ink-soft); font-size: 13px; line-height: 1.4; }
+  .ledger-row .l-author { display: flex; align-items: center; gap: 8px; }
+  .ledger-row .l-author .avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--ink); color: var(--paper);
+    display: grid; place-items: center;
+    font-family: var(--display); font-variation-settings: 'wght' 600;
+    font-size: 11px;
+  }
+
+  /* CTA finale */
+  .cta {
+    padding: 100px 0 80px;
+    text-align: center;
+  }
+  .cta h2 {
+    font-size: clamp(56px, 8vw, 120px);
+    font-variation-settings: 'opsz' 144, 'SOFT' 80, 'WONK' 1, 'wght' 500;
+    line-height: 0.9; letter-spacing: -0.035em;
+    margin-bottom: 28px;
+  }
+  .cta h2 em { color: var(--vermilion); font-style: italic; }
+  .cta-row { display: inline-flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+
+  @media (max-width: 880px) {
+    .hero .container, .principle .container, .roles .container { grid-template-columns: 1fr; gap: 36px; }
+    .belt { grid-template-columns: repeat(2, 1fr); }
+    .sample-frame { grid-template-columns: 1fr; }
+    .sample-frame .stage { border-right: 0; border-bottom: var(--rule-w) solid var(--rule); }
+    .ledger-row { grid-template-columns: 80px 1fr 1fr 90px; gap: 12px; }
+    .ledger-row > .l-author, .ledger-row > .l-revision { display: none; }
+    .entry-strip { grid-template-columns: 1fr; }
+    .hero-aside-pull { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="brand">
+    <span class="brand-mark">Veritasee<sup>°</sup></span>
+    <span class="brand-tag">Override</span>
+  </div>
+  <nav>
+    <a href="landing.html" class="active">Read</a>
+    <a href="editor.html">Contribute</a>
+    <a href="moderator.html">Moderate</a>
+    <a href="dashboard.html">Ledger</a>
+  </nav>
+  <div class="meta">
+    <span>EDITION 0.1 · DRAFT</span>
+    <span class="sep">·</span>
+    <span>EST. MMXXVI</span>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-aside-pull">
+    <div><strong>VOL. 1 — №. 4</strong></div>
+    <div>The Editor's Mark</div>
+    <div>2026 · 05 · 18</div>
+  </div>
+
+  <div class="container">
+    <div class="hero-left">
+      <div class="eyebrow reveal delay-0"><span class="dot"></span>A community-governed correction overlay</div>
+      <h1 class="hero-headline reveal delay-1">
+        Encyclopedias<br/>
+        are <span class="cross">authored</span><br/>
+        not <em>authoritative.</em>
+      </h1>
+    </div>
+    <div class="hero-side reveal delay-2">
+      <p class="lede">
+        Veritasee lets readers see a community-vetted <em>Verity Score</em> and corrections layered on top of any article — Wikipedia, Britannica, Citizendium, or anywhere a paragraph claims to be true.
+      </p>
+      <div class="row gap-3 wrap">
+        <span class="pill outline-vermilion"><span class="dot"></span>Reader-first</span>
+        <span class="pill"><span class="dot"></span>Open beta</span>
+        <span class="pill"><span class="dot"></span>WCAG 2.2 AA</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <form class="entry-strip reveal delay-3" onsubmit="event.preventDefault();">
+      <div class="entry-label">
+        <span class="kicker">§ 5.1 — Universal entry</span>
+        <span class="head">Paste any article URL</span>
+      </div>
+      <input class="url-input" type="url" placeholder="https://en.wikipedia.org/wiki/Treaty_of_Tordesillas" />
+      <button class="btn btn-vermilion" type="submit">
+        Open overlay <span class="arrow">→</span>
+      </button>
+    </form>
+
+    <div class="belt reveal delay-4">
+      <div>
+        <div class="belt-num">01 / Proxy</div>
+        <div class="belt-text">Server-side fetch, sanitize, rewrite — rendered from our domain.</div>
+      </div>
+      <div>
+        <div class="belt-num">02 / Anchor</div>
+        <div class="belt-text">W3C Text Fragments pin every correction to its exact paragraph.</div>
+      </div>
+      <div>
+        <div class="belt-num">03 / Verify</div>
+        <div class="belt-text">Humans hold the pen. AI fetches evidence — it does not publish.</div>
+      </div>
+      <div>
+        <div class="belt-num">04 / Govern</div>
+        <div class="belt-text">Reputation-weighted moderation. Every decision audit-trailed, reversible.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- principle -->
+<section class="principle">
+  <div class="container">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>§ Editorial principle</div>
+      <h2 class="mt-4">
+        Humans<br/>
+        hold the <em>pen.</em><br/>
+        AI fetches<br/>
+        the <em>evidence.</em>
+      </h2>
+    </div>
+    <div class="copy">
+      <p>Every published correction on Veritasee is <strong>authored by a verified human</strong>. AI tools can compile supporting and contradicting evidence — they stage findings into the editor — but a contributor must review, edit, and explicitly confirm review before submission is enabled.</p>
+      <p>The Verity Score is a rationale, not a verdict: <strong>0–100% on a per-section basis</strong>, with a written justification of forty characters minimum. Sections drift. Sources change. We version, we re-anchor, and we warn when the ground moves.</p>
+      <p>Governance scales as the contributor base matures: a single moderator queue at launch, reputation-weighted auto-approval at v1.2, topic-scoped review thereafter. <strong>The pressure release is built in.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- SAMPLE PROXIED ARTICLE -->
+<section class="sample">
+  <div class="container">
+    <div class="row between baseline gap-4 wrap">
+      <div>
+        <div class="eyebrow"><span class="dot"></span>§ 5.2 — Specimen overlay</div>
+        <h3 class="display mt-4" style="font-size:48px; line-height:1;">A page in the act of being corrected.</h3>
+      </div>
+      <div class="row gap-2 center">
+        <span class="pill outline-vermilion"><span class="dot"></span>Live demo</span>
+        <a class="btn btn-ghost" href="reader.html">Open full reader <span class="arrow">→</span></a>
+      </div>
+    </div>
+
+    <div class="sample-frame">
+      <div class="stage">
+        <div class="eyebrow" style="color:var(--vermilion);">Wikipedia · en · Treaty of Tordesillas</div>
+        <h3 class="mt-3">Treaty of Tordesillas</h3>
+        <div class="source-meta">
+          <span>SOURCE-REV · <code class="mono">a4f2e1c…</code></span>
+          <span>FETCHED · 2026·05·18 08:14 UTC</span>
+          <span>3 OVERRIDES · 1 PENDING</span>
+        </div>
+
+        <p>The Treaty of Tordesillas, signed on <mark class="corrected">7 June 1494<sup class="fn">1</sup></mark>, divided the newly discovered lands outside Europe between the Portuguese Empire and the Crown of Castile. The dividing line lay halfway between Cape Verde and the islands entered by Columbus on his first voyage.</p>
+        <p>The lands east of the line would belong to Portugal and lands west to Castile. The treaty was negotiated at <mark class="corrected">Tordesillas in modern-day Spain<sup class="fn">2</sup></mark>, and it was signed by representatives of both monarchies.</p>
+        <p>The other side of the world was divided a few decades later by the Treaty of Zaragoza, signed in 1529, which specified the antimeridian to the line of demarcation specified in the Treaty of Tordesillas. The Portuguese and Spanish were able to settle their imperial competition without resorting to <mark class="corrected">peaceful negotiation<sup class="fn">3</sup></mark>.</p>
+      </div>
+
+      <aside class="margin">
+        <div class="margin-card">
+          <span class="anchor">1</span>
+          <div class="meta-row">
+            <span class="verity-chip high">
+              <span class="num">94</span>
+              <span>Verity</span>
+            </span>
+            <span class="pill outline-verdigris"><span class="dot"></span>Approved</span>
+          </div>
+          <div class="correction-body">Date is correct, but missing context: <strong>ratified by Spain on 2 July, by Portugal on 5 September</strong> — the 7 June signing was provisional pending ratification.</div>
+          <div class="citation">
+            <a href="#">Davenport, F. G.</a> · <em>European Treaties Bearing on the History of the United States</em>, 1917, pp. 84–100. DOI: 10.5860/CHOICE.51-6213
+          </div>
+        </div>
+
+        <div class="margin-card">
+          <span class="anchor">2</span>
+          <div class="meta-row">
+            <span class="verity-chip high">
+              <span class="num">88</span>
+              <span>Verity</span>
+            </span>
+            <span class="pill outline-verdigris"><span class="dot"></span>Approved</span>
+          </div>
+          <div class="correction-body"><strong>Tordesillas is in Valladolid province, Castilla y León</strong> — &ldquo;modern-day Spain&rdquo; understates that it was already Crown of Castile at signing.</div>
+          <div class="citation">
+            <a href="#">Diffie & Winius</a> · <em>Foundations of the Portuguese Empire, 1415–1580</em>, U. Minnesota Press, 1977
+          </div>
+        </div>
+
+        <div class="margin-card" style="border-color: var(--vermilion);">
+          <span class="anchor" style="background:var(--ochre);">3</span>
+          <div class="meta-row">
+            <span class="verity-chip low">
+              <span class="num">22</span>
+              <span>Verity</span>
+            </span>
+            <span class="pill outline-vermilion"><span class="dot"></span>In review</span>
+          </div>
+          <div class="correction-body"><strong>This sentence inverts its meaning.</strong> The Treaty of Zaragoza <em>was</em> the negotiated settlement — the original wording suggests they avoided negotiation.</div>
+          <div class="citation">
+            <a href="#">Lach, Donald F.</a> · <em>Asia in the Making of Europe, Vol. I</em>, U. Chicago Press, 1965
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ROLES -->
+<section class="roles">
+  <div class="container">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>§ 3 — Roles & access</div>
+      <h2 class="mt-4">Four hands<br/>on the press.</h2>
+      <p class="mt-6 text-mute" style="font-family:var(--reading); font-size:16px; line-height:1.55; max-width:32ch;">Capabilities expand with trust. Anyone can read. Authoring is invitation-only at launch, opens publicly at v1.1, and unlocks auto-approval at v1.2.</p>
+    </div>
+
+    <div class="roles-grid">
+      <div class="role-cell">
+        <div class="role-num">01 / Anonymous</div>
+        <h4>Reader</h4>
+        <div class="role-auth">No account required</div>
+        <p>View overrides, Verity Scores, and source citations. Submit anonymous &ldquo;report inaccuracy&rdquo; flags. Rate-limited by IP — no Sybil farm.</p>
+        <div class="role-caps">
+          <span class="pill">View</span>
+          <span class="pill">Flag</span>
+        </div>
+      </div>
+      <div class="role-cell">
+        <div class="role-num">02 / Authenticated</div>
+        <h4>Contributor</h4>
+        <div class="role-auth">Clerk · email-verified</div>
+        <p>Author corrections, attach references, request AI verification. Submissions enter the moderator queue. Earns Trust Points on approval; 180-day decay.</p>
+        <div class="role-caps">
+          <span class="pill">Author</span>
+          <span class="pill">Cite</span>
+          <span class="pill">Verify</span>
+        </div>
+      </div>
+      <div class="role-cell">
+        <div class="role-num">03 / Granted</div>
+        <h4>Moderator</h4>
+        <div class="role-auth">Topic-scoped at v1.2</div>
+        <p>Approve / reject / request revision on submitted corrections. See the AI evidence trail. Can reverse auto-approvals within the 24-hour challenge window.</p>
+        <div class="role-caps">
+          <span class="pill">Approve</span>
+          <span class="pill">Reject</span>
+          <span class="pill">Demote</span>
+        </div>
+      </div>
+      <div class="role-cell">
+        <div class="role-num">04 / Privileged</div>
+        <h4>Administrator</h4>
+        <div class="role-auth">Granted manually</div>
+        <p>Configure providers, rate limits, taxonomies, scenario presets, Trust Point formulas. Reverse any moderation decision. Holds the master errata.</p>
+        <div class="role-caps">
+          <span class="pill">Configure</span>
+          <span class="pill">Reverse</span>
+          <span class="pill">Suspend</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LEDGER -->
+<section class="ledger">
+  <div class="container">
+    <div class="ledger-head">
+      <div>
+        <div class="eyebrow"><span class="dot"></span>§ The Editorial Ledger</div>
+        <h2 class="mt-4">Today's corrections,<br/>signed for.</h2>
+      </div>
+      <div class="row gap-3 center">
+        <span class="pill outline-verdigris"><span class="dot"></span>Live · 24h window</span>
+        <a class="btn btn-ghost" href="dashboard.html">Full ledger <span class="arrow">→</span></a>
+      </div>
+    </div>
+
+    <div class="ledger-table">
+      <div class="ledger-row head">
+        <span class="l-time">Time</span>
+        <span class="l-source">Source</span>
+        <span class="l-section">Correction</span>
+        <span class="l-author">Author</span>
+        <span class="l-revision">Verity</span>
+        <span class="l-revision">State</span>
+      </div>
+      <div class="ledger-row">
+        <span class="l-time">08:42 UTC</span>
+        <span class="l-source">Britannica · Tycho Brahe</span>
+        <span class="l-section">Date of death given as 24 Oct 1601 — primary letters cite the 23rd.</span>
+        <span class="l-author"><span class="avatar">AM</span> a.morisot</span>
+        <span class="l-revision"><span class="verity-chip high" style="font-size:9px; padding:2px 8px 2px 2px;"><span class="num" style="width:18px;height:18px;font-size:10px;">91</span></span></span>
+        <span class="l-revision"><span class="pill outline-verdigris"><span class="dot"></span>Approved</span></span>
+      </div>
+      <div class="ledger-row">
+        <span class="l-time">08:14 UTC</span>
+        <span class="l-source">Wikipedia · Tordesillas</span>
+        <span class="l-section">Negotiation framing reversed — Zaragoza was the negotiated settlement.</span>
+        <span class="l-author"><span class="avatar">PR</span> p.reyes</span>
+        <span class="l-revision"><span class="verity-chip low" style="font-size:9px; padding:2px 8px 2px 2px;"><span class="num" style="width:18px;height:18px;font-size:10px;">22</span></span></span>
+        <span class="l-revision"><span class="pill outline-vermilion"><span class="dot"></span>In review</span></span>
+      </div>
+      <div class="ledger-row">
+        <span class="l-time">07:51 UTC</span>
+        <span class="l-source">Citizendium · Lascaux</span>
+        <span class="l-section">Cave closure year reads 1963; actually closed to public 20 April 1963 after 16 years.</span>
+        <span class="l-author"><span class="avatar">HK</span> h.kovac</span>
+        <span class="l-revision"><span class="verity-chip high" style="font-size:9px; padding:2px 8px 2px 2px;"><span class="num" style="width:18px;height:18px;font-size:10px;">87</span></span></span>
+        <span class="l-revision"><span class="pill outline-verdigris"><span class="dot"></span>Approved</span></span>
+      </div>
+      <div class="ledger-row">
+        <span class="l-time">07:32 UTC</span>
+        <span class="l-source">Wikipedia · Ada Lovelace</span>
+        <span class="l-section">Translator's Notes G length given as &ldquo;three times Menabrea's paper&rdquo; — closer to 2.5×.</span>
+        <span class="l-author"><span class="avatar">SO</span> s.okwu</span>
+        <span class="l-revision"><span class="verity-chip med" style="font-size:9px; padding:2px 8px 2px 2px;"><span class="num" style="width:18px;height:18px;font-size:10px;">64</span></span></span>
+        <span class="l-revision"><span class="pill"><span class="dot"></span>Needs rev.</span></span>
+      </div>
+      <div class="ledger-row">
+        <span class="l-time">06:18 UTC</span>
+        <span class="l-source">Britannica · Boltzmann</span>
+        <span class="l-section">Constant attribution — Planck inscribed the formula; Boltzmann never wrote it in that form.</span>
+        <span class="l-author"><span class="avatar">LX</span> l.xu</span>
+        <span class="l-revision"><span class="verity-chip high" style="font-size:9px; padding:2px 8px 2px 2px;"><span class="num" style="width:18px;height:18px;font-size:10px;">96</span></span></span>
+        <span class="l-revision"><span class="pill outline-verdigris"><span class="dot"></span>Approved</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="container-narrow">
+    <div class="eyebrow"><span class="dot"></span>Stop reading uncorrected encyclopedias</div>
+    <h2 class="mt-6">
+      Truth is<br/><em>a working document.</em>
+    </h2>
+    <p class="mt-6 text-mute" style="font-family:var(--reading); font-size:20px; line-height:1.5; max-width:42ch; margin-inline:auto;">
+      Open the proxy on any article. Install the extension and the overlay follows you to the source. Apply to contribute and earn your first Trust Points.
+    </p>
+    <div class="cta-row mt-8">
+      <a class="btn btn-vermilion" href="reader.html">Open the proxy reader <span class="arrow">→</span></a>
+      <a class="btn btn-secondary" href="editor.html">Apply to contribute</a>
+      <a class="btn btn-ghost" href="#">Install the extension</a>
+    </div>
+  </div>
+</section>
+
+<footer class="ledger-foot">
+  <div>VERITASEE OVERRIDE · v0.1 · MMXXVI</div>
+  <div>EDITION · DRAFT · NOT YET PUBLIC</div>
+  <div>P95 READ · 2.41s · 99.62% UPTIME</div>
+</footer>
+
+</body>
+</html>
