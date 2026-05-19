@@ -1,0 +1,921 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Moderator queue — Veritasee Override</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  /* queue stats strip */
+  .queue-stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .queue-stats .qs {
+    padding: 18px 24px;
+    border-left: var(--rule-w) solid rgba(242,237,226,0.12);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .queue-stats .qs:first-child { border-left: 0; }
+  .queue-stats .qs-num {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 60, 'SOFT' 50, 'WONK' 1, 'wght' 500;
+    font-size: 38px; line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .queue-stats .qs-num.warn { color: var(--ochre-soft); }
+  .queue-stats .qs-num.bad { color: #E6907A; }
+  .queue-stats .qs-label {
+    font-family: var(--ui); font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: rgba(242,237,226,0.6);
+    font-weight: 700;
+  }
+  .queue-stats .qs-sub {
+    font-family: var(--mono); font-size: 11px;
+    color: rgba(242,237,226,0.55);
+    margin-top: 2px;
+  }
+
+  /* 3-column workbench */
+  .bench {
+    display: grid;
+    grid-template-columns: 360px minmax(0, 1fr) 380px;
+    min-height: calc(100vh - 200px);
+  }
+  .bench > section {
+    border-right: var(--rule-w) solid var(--rule);
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+  }
+  .bench > section:last-child { border-right: 0; }
+
+  /* QUEUE LIST */
+  .queue-toolbar {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--paper);
+    padding: 16px 18px 12px;
+    border-bottom: var(--rule-w) solid var(--rule);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .queue-toolbar .q-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .queue-toolbar .q-title {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 36, 'SOFT' 60, 'WONK' 1;
+    font-size: 22px; line-height: 1;
+  }
+  .queue-toolbar .filter-pills {
+    display: flex; gap: 6px; flex-wrap: wrap;
+  }
+  .queue-toolbar .filter-pills .fp {
+    font-family: var(--ui); font-size: 10px;
+    font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border: var(--rule-w) solid var(--rule);
+    background: transparent; cursor: pointer;
+    color: var(--ink-soft);
+  }
+  .queue-toolbar .fp.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .queue-toolbar .q-search {
+    border: var(--rule-w) solid var(--rule);
+    padding: 8px 12px;
+    font-family: var(--mono); font-size: 12px;
+    background: var(--paper-deep);
+  }
+
+  .queue-row {
+    padding: 14px 18px;
+    border-bottom: var(--rule-w) solid var(--rule);
+    cursor: pointer;
+    transition: background .15s;
+    position: relative;
+  }
+  .queue-row:hover { background: var(--paper-deep); }
+  .queue-row.active {
+    background: var(--paper-deep);
+    border-left: 4px solid var(--vermilion);
+    padding-left: 14px;
+  }
+
+  .queue-row .qr-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+    gap: 8px;
+  }
+  .queue-row .qr-src {
+    font-family: var(--ui); font-size: 10.5px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 700;
+  }
+  .queue-row .qr-age {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-mute);
+  }
+  .queue-row .qr-age.urgent { color: var(--vermilion); }
+  .queue-row .qr-title {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 24, 'SOFT' 40, 'WONK' 0;
+    font-size: 16px;
+    line-height: 1.25;
+    margin-bottom: 6px;
+  }
+  .queue-row .qr-preview {
+    font-family: var(--reading);
+    font-size: 13px; line-height: 1.45;
+    color: var(--ink-soft);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .queue-row .qr-foot {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 8px;
+  }
+  .queue-row .qr-author {
+    display: flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-mute);
+  }
+  .queue-row .qr-author .avi {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--ink); color: var(--paper);
+    display: grid; place-items: center;
+    font-family: var(--display); font-size: 9px;
+    font-variation-settings: 'wght' 600;
+  }
+  .queue-row .qr-trust {
+    font-family: var(--mono); font-size: 10px; color: var(--ink);
+    letter-spacing: 0;
+  }
+  .queue-row .qr-trust.high { color: var(--verdigris); }
+  .queue-row .qr-trust.low  { color: var(--vermilion); }
+
+  /* SELECTED ITEM DETAIL */
+  .detail {
+    padding: 28px 36px;
+  }
+
+  .detail-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 120px;
+    gap: 28px;
+    align-items: start;
+    padding-bottom: 22px;
+    border-bottom: var(--rule-w-bold) solid var(--ink);
+    margin-bottom: 28px;
+  }
+  .detail-hero h2 {
+    font-size: 38px;
+    font-variation-settings: 'opsz' 60, 'SOFT' 60, 'WONK' 1;
+    line-height: 1.05; margin-bottom: 8px;
+  }
+  .detail-hero .breadcrumb {
+    display: flex; gap: 12px; align-items: center;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-mute); margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .detail-hero .breadcrumb a { color: var(--lapis); text-decoration: none; border-bottom: 1px solid var(--lapis); }
+  .detail-hero .tag-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: var(--rule-w-bold) solid var(--ink);
+    margin-bottom: 28px;
+  }
+  .compare > div { padding: 22px 24px; }
+  .compare .cmp-source {
+    border-right: var(--rule-w) solid var(--ink);
+    background: var(--paper);
+  }
+  .compare .cmp-correction {
+    background: var(--paper-deep);
+    background-image:
+      repeating-linear-gradient(180deg, transparent 0 27px, var(--rule-hair) 27px 27.5px);
+  }
+  .compare h4 {
+    font-family: var(--ui);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--ink-mute);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: var(--rule-w) solid var(--rule);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .compare h4 .src-rev {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--vermilion);
+    text-transform: none; letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .compare p {
+    font-family: var(--reading);
+    font-variation-settings: 'opsz' 18;
+    font-size: 16.5px; line-height: 1.6;
+    color: var(--ink);
+  }
+  .compare .cmp-source mark {
+    background: var(--ochre-soft); padding: 0 4px;
+  }
+  .compare .cmp-correction p + p { margin-top: 10px; }
+  .compare .cmp-correction strong { color: var(--vermilion); font-weight: 500; }
+  .compare .cmp-correction .cite {
+    display: inline-block; padding: 0 6px;
+    background: var(--lapis); color: var(--paper);
+    font-family: var(--mono); font-size: 11px;
+    border-radius: 999px;
+    vertical-align: 2px; margin: 0 2px;
+  }
+
+  /* score + rationale */
+  .verity-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 28px;
+    align-items: center;
+    padding: 20px 24px;
+    border: var(--rule-w) solid var(--rule);
+    margin-bottom: 28px;
+    background: var(--paper);
+  }
+  .verity-row .vline {
+    font-family: var(--reading); font-style: italic;
+    font-size: 16px; line-height: 1.55; color: var(--ink);
+    font-variation-settings: 'opsz' 17;
+  }
+  .verity-row .vline-meta {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-mute); margin-top: 8px;
+  }
+
+  /* references in detail view */
+  .detail-refs {
+    margin-bottom: 28px;
+  }
+  .detail-refs .dr-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 14px;
+  }
+  .detail-refs .ref-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .detail-refs .ref-cell {
+    border: var(--rule-w) solid var(--rule);
+    padding: 14px 16px;
+    background: var(--paper);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .detail-refs .ref-cell .rc-num {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 96, 'WONK' 1, 'wght' 600;
+    font-size: 28px;
+    color: var(--vermilion);
+    line-height: 0.9;
+  }
+  .detail-refs .ref-cell .rc-title {
+    font-family: var(--reading); font-size: 14.5px; line-height: 1.4;
+  }
+  .detail-refs .ref-cell .rc-url {
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink-mute);
+    word-break: break-all;
+  }
+  .detail-refs .ref-cell .rc-url a { color: var(--lapis); text-decoration: none; border-bottom: 1px solid var(--lapis); }
+  .detail-refs .ref-cell .rc-meta {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: 6px;
+    font-family: var(--mono); font-size: 10px; color: var(--ink-mute);
+  }
+  .detail-refs .ref-cell .rc-meta .ok { color: var(--verdigris); }
+
+  /* AI evidence trail summary */
+  .ai-trail {
+    margin-bottom: 32px;
+    border: var(--rule-w) solid var(--rule);
+  }
+  .ai-trail .at-head {
+    background: var(--ink); color: var(--paper);
+    padding: 12px 18px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--ui); font-size: 10.5px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700;
+  }
+  .ai-trail .at-head .at-cost {
+    font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.06em; color: var(--ochre-soft);
+    text-transform: none;
+  }
+  .ai-trail .at-body {
+    display: grid; grid-template-columns: 1fr 1fr;
+    border-top: var(--rule-w) solid var(--rule);
+  }
+  .ai-trail .at-col { padding: 16px 18px; }
+  .ai-trail .at-col + .at-col { border-left: var(--rule-w) solid var(--rule); }
+  .ai-trail .at-col-head {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--ui); font-size: 10.5px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700; margin-bottom: 12px;
+  }
+  .ai-trail .at-col-head.support { color: var(--verdigris); }
+  .ai-trail .at-col-head.contra { color: var(--vermilion); }
+  .ai-trail .at-col-head .count {
+    background: currentColor; color: var(--paper);
+    padding: 2px 7px; font-size: 9.5px; border-radius: 999px;
+  }
+  .ai-trail .at-evd {
+    border-left: 2px solid var(--rule);
+    padding: 6px 12px;
+    margin-bottom: 10px;
+  }
+  .ai-trail .at-evd.support { border-color: var(--verdigris); }
+  .ai-trail .at-evd.contra { border-color: var(--vermilion); }
+  .ai-trail .at-evd .src {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--lapis);
+  }
+  .ai-trail .at-evd .snip {
+    font-family: var(--reading); font-style: italic;
+    font-size: 13px; line-height: 1.5; margin-top: 4px;
+    color: var(--ink-soft);
+  }
+
+  /* DECISION column */
+  .decision {
+    padding: 28px 24px;
+    background: var(--paper-deep);
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .decision-head {
+    border-bottom: var(--rule-w) solid var(--rule);
+    padding-bottom: 16px;
+  }
+  .decision-head h3 {
+    font-size: 24px;
+    font-variation-settings: 'opsz' 36, 'SOFT' 60, 'WONK' 1;
+    margin-bottom: 4px;
+  }
+  .decision-head .what {
+    font-family: var(--reading); font-size: 13.5px;
+    color: var(--ink-soft); line-height: 1.5;
+  }
+
+  .author-card {
+    background: var(--paper);
+    border: var(--rule-w) solid var(--rule);
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .author-card .avi {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--ink); color: var(--paper);
+    display: grid; place-items: center;
+    font-family: var(--display); font-size: 16px;
+    font-variation-settings: 'wght' 600;
+    flex-shrink: 0;
+  }
+  .author-card .ac-body { flex: 1; }
+  .author-card .ac-handle {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 24, 'WONK' 1;
+    font-size: 17px;
+  }
+  .author-card .ac-meta {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-mute); margin-top: 2px;
+  }
+  .author-card .ac-trust {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 60, 'WONK' 1, 'wght' 500;
+    font-size: 28px;
+    color: var(--verdigris);
+    line-height: 0.9;
+    font-variant-numeric: tabular-nums;
+  }
+  .author-card .ac-trust .sup {
+    font-family: var(--mono); font-size: 9px;
+    color: var(--ink-mute); letter-spacing: 0.16em;
+    display: block; margin-top: 2px;
+  }
+
+  .decision-actions {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .decision-actions button {
+    width: 100%;
+    padding: 16px 18px;
+    background: var(--paper); color: var(--ink);
+    border: var(--rule-w-bold) solid var(--ink);
+    font-family: var(--ui); font-size: 12.5px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .decision-actions button .ks {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mute);
+    letter-spacing: 0.06em;
+    border: var(--rule-w) solid var(--rule);
+    padding: 2px 6px;
+  }
+  .decision-actions button:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 currentColor; }
+  .decision-actions .approve { background: var(--verdigris); color: var(--paper); border-color: var(--verdigris); }
+  .decision-actions .approve .ks { background: rgba(0,0,0,0.18); color: var(--paper); border-color: rgba(242,237,226,0.3); }
+  .decision-actions .reject { background: var(--vermilion); color: var(--paper); border-color: var(--vermilion); }
+  .decision-actions .reject .ks { background: rgba(0,0,0,0.18); color: var(--paper); border-color: rgba(242,237,226,0.3); }
+  .decision-actions .revise { background: var(--paper); color: var(--ink); border-color: var(--ochre); }
+  .decision-actions .revise .ks { background: var(--paper-deep); color: var(--ink-mute); }
+
+  .reason-box {
+    border: var(--rule-w) solid var(--rule);
+    background: var(--paper);
+    padding: 14px;
+  }
+  .reason-box .rb-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .reason-box .rb-head .label {
+    font-family: var(--ui); font-size: 10.5px;
+    font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink-soft);
+  }
+  .reason-box .rb-head .opt {
+    font-family: var(--mono); font-size: 10px; color: var(--ink-mute);
+  }
+  .reason-box textarea { min-height: 80px; }
+  .reason-box .preset-row {
+    display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;
+  }
+  .reason-box .preset-row .preset {
+    font-family: var(--ui); font-size: 10px;
+    font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border: var(--rule-w) solid var(--rule);
+    background: transparent; cursor: pointer;
+    color: var(--ink-soft);
+  }
+  .reason-box .preset-row .preset:hover { background: var(--paper-deep); border-color: var(--ink); }
+
+  /* audit trail */
+  .audit {
+    border-top: var(--rule-w) solid var(--rule);
+    padding-top: 16px;
+  }
+  .audit-head {
+    font-family: var(--ui); font-size: 11px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    font-weight: 700; color: var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  .audit-line {
+    display: grid;
+    grid-template-columns: 14px 1fr auto;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: var(--rule-w) dashed var(--rule);
+    align-items: start;
+    font-family: var(--mono); font-size: 11px;
+  }
+  .audit-line:last-child { border-bottom: 0; }
+  .audit-line .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--ink-mute); margin-top: 4px;
+  }
+  .audit-line .dot.now { background: var(--vermilion); animation: pulse 2s infinite; }
+  .audit-line .ev {
+    color: var(--ink); line-height: 1.5;
+  }
+  .audit-line .ev .who {
+    font-family: var(--display); font-size: 12px; color: var(--ink);
+    font-variation-settings: 'WONK' 1;
+  }
+  .audit-line .when {
+    color: var(--ink-mute);
+    text-align: right;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+  /* keyboard hint footer */
+  .kb-hints {
+    border-top: var(--rule-w) solid var(--rule);
+    padding: 14px 24px;
+    background: var(--paper);
+    display: flex; gap: 18px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-mute);
+  }
+  .kb-hints kbd {
+    border: var(--rule-w) solid var(--rule);
+    padding: 1px 6px;
+    background: var(--paper-deep);
+    color: var(--ink);
+  }
+
+  @media (max-width: 1280px) {
+    .bench { grid-template-columns: 320px 1fr; }
+    .bench > section:last-child { display: none; }
+    .queue-stats { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="brand">
+    <span class="brand-mark">Veritasee<sup>°</sup></span>
+    <span class="brand-tag">Override · Moderator</span>
+  </div>
+  <nav>
+    <a href="landing.html">Read</a>
+    <a href="editor.html">Contribute</a>
+    <a href="moderator.html" class="active">Moderate</a>
+    <a href="dashboard.html">Ledger</a>
+  </nav>
+  <div class="meta">
+    <span>L.XU · MOD · TRUST 1,184</span>
+    <span class="sep">·</span>
+    <span>SCOPE · HISTORY · SCIENCE</span>
+  </div>
+</header>
+
+<div class="queue-stats">
+  <div class="qs">
+    <div class="qs-num">37</div>
+    <div class="qs-label">Pending · all topics</div>
+    <div class="qs-sub">+ 4 in last hour</div>
+  </div>
+  <div class="qs">
+    <div class="qs-num warn">12</div>
+    <div class="qs-label">In your scope</div>
+    <div class="qs-sub">history · science</div>
+  </div>
+  <div class="qs">
+    <div class="qs-num">17.4h</div>
+    <div class="qs-label">Median age</div>
+    <div class="qs-sub">SLA target ≤ 48h</div>
+  </div>
+  <div class="qs">
+    <div class="qs-num bad">3</div>
+    <div class="qs-label">Past SLA · urgent</div>
+    <div class="qs-sub">all assigned to L.XU</div>
+  </div>
+  <div class="qs">
+    <div class="qs-num">82%</div>
+    <div class="qs-label">Approval rate · 30d</div>
+    <div class="qs-sub">68 approved · 15 rev · 6 rej</div>
+  </div>
+</div>
+
+<main class="bench">
+
+  <!-- QUEUE LIST -->
+  <section class="reveal delay-0">
+    <div class="queue-toolbar">
+      <div class="q-row">
+        <div class="q-title">Queue</div>
+        <span class="pill solid-vermilion"><span class="dot" style="background:var(--paper);"></span>12 in scope</span>
+      </div>
+      <input type="search" class="q-search" placeholder="filter by source, author, keyword …" />
+      <div class="filter-pills">
+        <button class="fp active">In scope</button>
+        <button class="fp">All</button>
+        <button class="fp">Past SLA</button>
+        <button class="fp">High trust</button>
+        <button class="fp">Resubmit</button>
+      </div>
+    </div>
+
+    <div class="queue-row">
+      <div class="qr-top">
+        <span class="qr-src">Wikipedia · Tycho Brahe</span>
+        <span class="qr-age">6h 12m</span>
+      </div>
+      <div class="qr-title">Date of death — primary letters vs. published date.</div>
+      <div class="qr-preview">Brahe's date of death is given as 24 Oct 1601 in the article; Kepler's contemporaneous letters and the Prague registry give the 23rd as the date of death and 24th as burial …</div>
+      <div class="qr-foot">
+        <div class="qr-author"><span class="avi">AM</span> a.morisot</div>
+        <div class="qr-trust high">trust 612</div>
+      </div>
+    </div>
+
+    <div class="queue-row active">
+      <div class="qr-top">
+        <span class="qr-src">Wikipedia · Ada Lovelace</span>
+        <span class="qr-age urgent">2h 41m</span>
+      </div>
+      <div class="qr-title">Lovelace's Notes length — &ldquo;3×&rdquo; figure is sloppy.</div>
+      <div class="qr-preview">By word count, Lovelace's notes are closer to 2.5× the length of Menabrea's paper, not 3×. The 3× figure appears repeatedly in secondary literature but originates …</div>
+      <div class="qr-foot">
+        <div class="qr-author"><span class="avi">PR</span> p.reyes</div>
+        <div class="qr-trust">trust 247</div>
+      </div>
+    </div>
+
+    <div class="queue-row">
+      <div class="qr-top">
+        <span class="qr-src">Britannica · Boltzmann</span>
+        <span class="qr-age">14h 02m</span>
+      </div>
+      <div class="qr-title">Constant attribution — Planck inscribed the formula.</div>
+      <div class="qr-preview">The Boltzmann constant S = k log W was inscribed on Boltzmann's tombstone, but the formulation in that form is Planck's, not Boltzmann's …</div>
+      <div class="qr-foot">
+        <div class="qr-author"><span class="avi">LX</span> l.xu</div>
+        <div class="qr-trust high">trust 1184</div>
+      </div>
+    </div>
+
+    <div class="queue-row">
+      <div class="qr-top">
+        <span class="qr-src">Citizendium · Lascaux</span>
+        <span class="qr-age">22h 19m</span>
+      </div>
+      <div class="qr-title">Closure date precision — 20 April 1963, not just &ldquo;1963&rdquo;.</div>
+      <div class="qr-preview">Lascaux closed to the public on 20 April 1963, after 16 years of public access. The article gives only the year …</div>
+      <div class="qr-foot">
+        <div class="qr-author"><span class="avi">HK</span> h.kovac</div>
+        <div class="qr-trust">trust 318</div>
+      </div>
+    </div>
+
+    <div class="queue-row">
+      <div class="qr-top">
+        <span class="qr-src">Wikipedia · Tordesillas</span>
+        <span class="qr-age urgent">49h 03m · PAST SLA</span>
+      </div>
+      <div class="qr-title">Negotiation framing — Zaragoza was the negotiated settlement.</div>
+      <div class="qr-preview">The current article states the Portuguese and Spanish &ldquo;settled their competition without resorting to peaceful negotiation&rdquo; — this inverts the actual meaning …</div>
+      <div class="qr-foot">
+        <div class="qr-author"><span class="avi">PR</span> p.reyes</div>
+        <div class="qr-trust">trust 247</div>
+      </div>
+    </div>
+
+    <div class="queue-row">
+      <div class="qr-top">
+        <span class="qr-src">Britannica · Curie, Marie</span>
+        <span class="qr-age">31h 18m</span>
+      </div>
+      <div class="qr-title">First Nobel — physics 1903 was shared, not solo.</div>
+      <div class="qr-preview">The phrasing implies Curie won the 1903 physics Nobel alone; it was shared with Pierre Curie and Henri Becquerel …</div>
+      <div class="qr-foot">
+        <div class="qr-author"><span class="avi">SO</span> s.okwu</div>
+        <div class="qr-trust high">trust 891</div>
+      </div>
+    </div>
+
+    <div class="queue-row">
+      <div class="qr-top">
+        <span class="qr-src">Wikipedia · Treaty of Verdun</span>
+        <span class="qr-age">39h 07m</span>
+      </div>
+      <div class="qr-title">Date framing — August 843, not &ldquo;summer 843&rdquo;.</div>
+      <div class="qr-preview">Modern scholarship places the partition treaty as having been signed in early August 843; &ldquo;summer 843&rdquo; obscures available precision …</div>
+      <div class="qr-foot">
+        <div class="qr-author"><span class="avi">NB</span> n.bayer</div>
+        <div class="qr-trust low">trust 84</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAIL -->
+  <section class="detail reveal delay-1">
+
+    <div class="detail-hero">
+      <div>
+        <div class="breadcrumb">
+          <a href="#">Wikipedia · en</a>
+          <span>›</span>
+          <a href="#">Ada Lovelace</a>
+          <span>›</span>
+          <span>§ Work on the Analytical Engine · ¶ 3</span>
+          <span>·</span>
+          <span>Correction-ID <code style="color:var(--vermilion);">c_3kx8w2</code></span>
+        </div>
+        <h2 class="display">A claim of 3× length is closer to 2.5×.</h2>
+        <div class="tag-row">
+          <span class="pill outline-vermilion"><span class="dot"></span>Submitted · 2h 41m ago</span>
+          <span class="pill"><span class="dot"></span>Topic · History</span>
+          <span class="pill"><span class="dot"></span>Topic · Technology</span>
+          <span class="pill"><span class="dot"></span>Snapshot · <code style="font-family:var(--mono); font-size:10px;">a4f2e1c</code></span>
+        </div>
+      </div>
+      <div class="verity-stamp low" style="justify-self: end;">
+        <svg class="ring" viewBox="0 0 100 100">
+          <defs><path id="circ-mod" d="M50,50 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" fill="none"/></defs>
+          <text font-family="JetBrains Mono" font-size="7" letter-spacing="2.2" fill="currentColor">
+            <textPath href="#circ-mod">VERITY · PROPOSED · 28 · REV a4f2e1c · </textPath>
+          </text>
+        </svg>
+        <div class="core">
+          <span class="num">28</span>
+          <span class="pct">PCT</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- compare -->
+    <div class="compare">
+      <div class="cmp-source">
+        <h4>
+          <span>Source paragraph</span>
+          <span class="src-rev">rev a4f2e1c · 2026·05·15</span>
+        </h4>
+        <p>Lovelace's notes are <mark>approximately three times the length of Menabrea's original paper</mark>, and they include detailed criticism of the engine's capability. Note G is the basis for her being credited as the first computer programmer — though that claim is itself contested.</p>
+      </div>
+      <div class="cmp-correction">
+        <h4>
+          <span>Proposed correction</span>
+          <span style="font-family:var(--mono); font-size:10px; color:var(--ink-mute); text-transform:none; letter-spacing:0.06em;">markdown · 187 w</span>
+        </h4>
+        <p>By word count, Lovelace's notes are closer to <strong>2.5× the length</strong> of Menabrea's paper, not 3×. Menabrea's <em>Notions sur la machine analytique</em> runs roughly <strong>5,400 words</strong>; Lovelace's Notes A–G together total approximately <strong>13,000 words</strong> <span class="cite">[1]</span>.</p>
+        <p>The 3× figure appears repeatedly in secondary literature but appears to originate from a single 1979 paraphrase that has been re-cited without re-measurement <span class="cite">[2]</span>. The British Library's manuscript catalogue gives the original wordcount estimates used here.</p>
+      </div>
+    </div>
+
+    <!-- verity rationale -->
+    <div class="verity-row">
+      <div class="verity-chip low" style="padding: 6px 14px 6px 4px;">
+        <span class="num" style="width:32px;height:32px;font-size:14px;">28</span>
+        <span style="font-size: 11px;">Verity · proposed</span>
+      </div>
+      <div>
+        <div class="vline">&ldquo;Original section is mostly accurate but the 3× wordcount figure is sloppy and frequently re-cited without re-measurement. Adjusting to 2.5× brings the claim in line with primary manuscript count.&rdquo;</div>
+        <div class="vline-meta">Author rationale · 202 chars · ≥ 40 required ✓</div>
+      </div>
+    </div>
+
+    <!-- references -->
+    <div class="detail-refs">
+      <div class="dr-head">
+        <div class="eyebrow"><span class="dot"></span>References attached · 2 of ≥ 1</div>
+        <span class="mono" style="font-size:11px; color:var(--ink-mute);">FR-CE-3 · non-encyclopedia required</span>
+      </div>
+      <div class="ref-grid">
+        <div class="ref-cell">
+          <span class="rc-num">1</span>
+          <div class="rc-title">Hollings, Martin & Rice — <em>Ada Lovelace: The Making of a Computer Scientist</em>, ch. 6 §3</div>
+          <div class="rc-url"><a href="#">bodleian.ox.ac.uk/ada-lovelace</a></div>
+          <div class="rc-meta">
+            <span class="ok">HTTP 200 · 184 ms</span>
+            <span class="ok">Non-encyclopedia ✓</span>
+            <span>Bodleian · 2018</span>
+          </div>
+        </div>
+        <div class="ref-cell">
+          <span class="rc-num">2</span>
+          <div class="rc-title">British Library — <em>Original manuscript, Add MS 37192</em></div>
+          <div class="rc-url"><a href="#">DOI 10.34055/bl.add.37192</a></div>
+          <div class="rc-meta">
+            <span class="ok">DOI resolved ✓</span>
+            <span class="ok">Primary source ✓</span>
+            <span>1843 · manuscript</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ai trail -->
+    <div class="ai-trail">
+      <div class="at-head">
+        <span>AI evidence trail · Academic preset · Claude Opus 4.7</span>
+        <span class="at-cost">$0.078 · 28.4s · 1 of 1 runs · author has 6/10 quota</span>
+      </div>
+      <div class="at-body">
+        <div class="at-col">
+          <div class="at-col-head support">
+            Supporting <span class="count">3</span>
+          </div>
+          <div class="at-evd support">
+            <div class="src">bodleian.ox.ac.uk · rel 94%</div>
+            <div class="snip">&ldquo;…the final published version runs to roughly two and a half times the original …&rdquo;</div>
+          </div>
+          <div class="at-evd support">
+            <div class="src">semanticscholar.org · rel 88%</div>
+            <div class="snip">&ldquo;~13,000 English words against ~5,400 in Menabrea's French original …&rdquo;</div>
+          </div>
+          <div class="at-evd support">
+            <div class="src">jstor.org · rel 71%</div>
+            <div class="snip">&ldquo;Stein (1985): 'between 2.4 and 2.6 times the source' …&rdquo;</div>
+          </div>
+        </div>
+        <div class="at-col">
+          <div class="at-col-head contra">
+            Contradicting <span class="count">1</span>
+          </div>
+          <div class="at-evd contra">
+            <div class="src">computerhistory.org · rel 58%</div>
+            <div class="snip">&ldquo;Modern commentators consistently describe Lovelace's Notes as three times the length of the Menabrea memoir …&rdquo;
+              <span style="display:block; margin-top:6px; color:var(--ink-mute); font-style:normal; font-family:var(--mono); font-size:10px;">(secondary; inherits from same 1979 paraphrase)</span></div>
+          </div>
+          <div style="margin-top: 14px; padding: 10px 12px; background: rgba(184,132,43,0.08); border: 1px dashed var(--ochre); font-family: var(--reading); font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); font-style: italic;">
+            FR-AI-4 attestation present: author confirmed &ldquo;I have reviewed and edited this content&rdquo; before submit was enabled. AI synthesis was staged but author edited body materially (Levenshtein distance 412 chars).
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- DECISION COLUMN -->
+  <aside class="decision reveal delay-2">
+    <div class="decision-head">
+      <h3>Decide</h3>
+      <p class="what">All decisions are auditable and reversible by an Admin within the 24h challenge window.</p>
+    </div>
+
+    <div class="author-card">
+      <div class="avi">PR</div>
+      <div class="ac-body">
+        <div class="ac-handle">p.reyes</div>
+        <div class="ac-meta">14 approved · 3 rev · 0 rejected · joined 2026·02·11</div>
+      </div>
+      <div>
+        <div class="ac-trust">247<span class="sup">TRUST</span></div>
+      </div>
+    </div>
+
+    <div class="decision-actions">
+      <button class="approve">
+        Approve <span class="ks">A</span>
+      </button>
+      <button class="revise">
+        Needs revision <span class="ks">R</span>
+      </button>
+      <button class="reject">
+        Reject <span class="ks">⌘ R</span>
+      </button>
+    </div>
+
+    <div class="reason-box">
+      <div class="rb-head">
+        <span class="label">Comment to author</span>
+        <span class="opt">Optional · Approve · Required · Reject / Revise</span>
+      </div>
+      <textarea class="input" placeholder="Approved as submitted. Strong primary-source citation; clean drift on the &ldquo;3×&rdquo; folk figure.">Approved as submitted. Strong primary-source citation; clean drift on the &ldquo;3×&rdquo; folk figure. Suggest a follow-up to also patch the Analytical Engine article where the same figure appears.</textarea>
+      <div class="preset-row">
+        <button class="preset">+ Strong primary source</button>
+        <button class="preset">+ Anchor stable</button>
+        <button class="preset">+ AI evidence balanced</button>
+        <button class="preset">! Verity overstated</button>
+        <button class="preset">! Missing primary ref</button>
+      </div>
+    </div>
+
+    <div class="audit">
+      <div class="audit-head">§ Audit trail</div>
+      <div class="audit-line">
+        <span class="dot now"></span>
+        <span class="ev"><span class="who">l.xu</span> opened for review</span>
+        <span class="when">09:42 UTC<br/>just now</span>
+      </div>
+      <div class="audit-line">
+        <span class="dot"></span>
+        <span class="ev"><span class="who">p.reyes</span> submitted · attached 2 refs · ran Academic AI verify</span>
+        <span class="when">07:01 UTC<br/>2h 41m ago</span>
+      </div>
+      <div class="audit-line">
+        <span class="dot"></span>
+        <span class="ev"><span class="who">p.reyes</span> staged 2 AI evidence cards · checked FR-AI-4 gate</span>
+        <span class="when">06:58 UTC<br/>2h 44m ago</span>
+      </div>
+      <div class="audit-line">
+        <span class="dot"></span>
+        <span class="ev"><span class="who">system</span> anchor computed · unique in source ✓ · snapshot pinned</span>
+        <span class="when">06:42 UTC<br/>3h 00m ago</span>
+      </div>
+      <div class="audit-line">
+        <span class="dot"></span>
+        <span class="ev"><span class="who">p.reyes</span> created draft</span>
+        <span class="when">06:38 UTC<br/>3h 04m ago</span>
+      </div>
+    </div>
+  </aside>
+
+</main>
+
+<div class="kb-hints">
+  <span><kbd>A</kbd> Approve</span>
+  <span><kbd>R</kbd> Needs revision</span>
+  <span><kbd>⌘ R</kbd> Reject</span>
+  <span><kbd>J</kbd> / <kbd>K</kbd> Next / prev in queue</span>
+  <span><kbd>S</kbd> Skip / unassign</span>
+  <span><kbd>?</kbd> Full shortcuts</span>
+</div>
+
+</body>
+</html>

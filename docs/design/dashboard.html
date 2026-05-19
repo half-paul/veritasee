@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dashboard — Veritasee Override</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  .greet {
+    padding: 56px 32px 28px;
+    border-bottom: var(--rule-w) solid var(--rule);
+  }
+  .greet .container { display: grid; grid-template-columns: 1fr auto; gap: 36px; align-items: end; }
+  .greet h1 {
+    font-size: clamp(48px, 7vw, 96px);
+    font-variation-settings: 'opsz' 144, 'SOFT' 70, 'WONK' 1, 'wght' 480;
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+  }
+  .greet h1 em { color: var(--vermilion); font-style: italic; }
+  .greet .lede {
+    font-family: var(--reading); font-size: 18px;
+    color: var(--ink-soft); margin-top: 10px;
+    font-variation-settings: 'opsz' 21;
+  }
+  .greet .ts {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-mute);
+    line-height: 1.7;
+    text-align: right;
+  }
+  .greet .ts strong { color: var(--ink); }
+
+  /* Main grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-bottom: var(--rule-w) solid var(--rule);
+  }
+  .grid > * {
+    padding: 28px 32px;
+    border-right: var(--rule-w) solid var(--rule);
+    border-bottom: var(--rule-w) solid var(--rule);
+  }
+  .grid > *:nth-child(3n) { border-right: 0; }
+  .grid > *:last-child, .grid > *:nth-last-child(2), .grid > *:nth-last-child(3) { border-bottom: 0; }
+  .grid h3 {
+    font-size: 18px;
+    font-variation-settings: 'opsz' 24, 'WONK' 1;
+    margin-bottom: 4px;
+  }
+  .grid .sub {
+    font-family: var(--reading); font-size: 13px;
+    color: var(--ink-mute); margin-bottom: 18px;
+  }
+
+  /* TRUST POINTS card */
+  .trust-card {
+    grid-column: span 2; grid-row: span 2;
+    background: var(--ink); color: var(--paper);
+    border-bottom: var(--rule-w) solid var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .trust-card::before {
+    content: ''; position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(at 70% 30%, rgba(200,51,28,0.15) 0, transparent 60%),
+      radial-gradient(at 30% 80%, rgba(184,132,43,0.10) 0, transparent 55%);
+    pointer-events: none;
+  }
+  .trust-card > * { position: relative; }
+  .trust-card .eyebrow { color: var(--ochre-soft); }
+  .trust-card .eyebrow .dot { background: var(--ochre); }
+  .trust-card .trust-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    align-items: start;
+    margin-top: 18px;
+  }
+  .trust-card .stat-num {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 144, 'SOFT' 80, 'WONK' 1, 'wght' 500;
+    font-size: 200px; line-height: 0.85;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+    color: var(--paper);
+  }
+  .trust-card .stat-num .delta {
+    display: inline-block;
+    font-size: 32px;
+    color: var(--ochre-soft);
+    vertical-align: super;
+    margin-left: 8px;
+    letter-spacing: 0;
+    font-variation-settings: 'WONK' 0;
+  }
+
+  .trust-card .stat-body {
+    font-family: var(--reading);
+    font-size: 14.5px; line-height: 1.55;
+    color: rgba(242,237,226,0.75);
+    font-variation-settings: 'opsz' 17;
+  }
+  .trust-card .stat-body em { color: var(--paper); font-style: normal; font-weight: 500; }
+
+  .trust-card .next-threshold {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border: var(--rule-w) solid rgba(242,237,226,0.18);
+    background: rgba(242,237,226,0.04);
+    font-family: var(--ui); font-size: 11px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    line-height: 1.6;
+    color: rgba(242,237,226,0.7);
+  }
+  .trust-card .next-threshold strong { color: var(--ochre-soft); }
+  .trust-card .next-threshold .bar {
+    margin-top: 8px;
+    height: 4px;
+    background: rgba(242,237,226,0.12);
+    position: relative;
+  }
+  .trust-card .next-threshold .bar::after {
+    content: ''; position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 24.7%;
+    background: var(--ochre);
+  }
+
+  .trust-events {
+    margin-top: 22px;
+    border-top: var(--rule-w) solid rgba(242,237,226,0.12);
+    padding-top: 14px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .trust-events .te-row {
+    display: grid; grid-template-columns: 60px 1fr auto auto;
+    align-items: center;
+    padding: 6px 0;
+    font-family: var(--mono); font-size: 11px;
+    border-bottom: var(--rule-w) dashed rgba(242,237,226,0.10);
+    gap: 16px;
+  }
+  .trust-events .te-row:last-child { border-bottom: 0; }
+  .trust-events .te-delta {
+    font-family: var(--display);
+    font-variation-settings: 'wght' 600, 'WONK' 1;
+    font-size: 18px; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .trust-events .te-delta.pos { color: var(--ochre-soft); }
+  .trust-events .te-delta.neg { color: #E6907A; }
+  .trust-events .te-evt {
+    color: rgba(242,237,226,0.85);
+    font-family: var(--ui); font-size: 11.5px;
+    letter-spacing: 0.04em; text-transform: none;
+    font-weight: 500;
+  }
+  .trust-events .te-when {
+    color: rgba(242,237,226,0.45);
+  }
+  .trust-events .te-decay {
+    color: rgba(242,237,226,0.45);
+    font-size: 10px;
+  }
+
+  /* QUOTA card */
+  .quota-card .meters {
+    display: flex; flex-direction: column; gap: 16px;
+    margin-top: 12px;
+  }
+  .quota-card .meter {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .quota-card .meter .mhead {
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .quota-card .meter .mname {
+    font-family: var(--ui); font-size: 11px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--ink-soft);
+  }
+  .quota-card .meter .mval {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 36, 'WONK' 1, 'wght' 500;
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
+  }
+  .quota-card .meter .mval .of {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-mute); letter-spacing: 0;
+    margin-left: 4px;
+  }
+  .quota-card .meter .mbar {
+    height: 10px;
+    background: var(--paper-deep);
+    border: var(--rule-w) solid var(--rule);
+    position: relative;
+  }
+  .quota-card .meter .mfill {
+    position: absolute; inset: 0 auto 0 0;
+    background: linear-gradient(90deg, var(--verdigris), var(--ochre));
+  }
+  .quota-card .meter .mfill.warn {
+    background: linear-gradient(90deg, var(--ochre), var(--vermilion));
+  }
+  .quota-card .reset-line {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-mute);
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: var(--rule-w) solid var(--rule);
+    display: flex; justify-content: space-between;
+  }
+
+  /* RECENT activity */
+  .recent-card { grid-column: span 3; }
+  .recent-card .recent-table {
+    margin-top: 14px;
+    border: var(--rule-w) solid var(--rule);
+  }
+  .recent-card .rec-row {
+    display: grid;
+    grid-template-columns: 100px 2fr 1fr 110px 130px 90px;
+    padding: 12px 18px;
+    gap: 18px;
+    align-items: center;
+    border-bottom: var(--rule-w) solid var(--rule);
+    font-family: var(--ui); font-size: 13px;
+  }
+  .recent-card .rec-row:last-child { border-bottom: 0; }
+  .recent-card .rec-row.head {
+    background: var(--ink); color: var(--paper);
+    font-size: 10.5px; letter-spacing: 0.18em;
+    text-transform: uppercase; font-weight: 700;
+  }
+  .recent-card .rec-row .rec-when { font-family: var(--mono); font-size: 11px; color: var(--ink-mute); }
+  .recent-card .rec-row.head .rec-when { color: var(--paper); }
+  .recent-card .rec-row .rec-title {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 24, 'WONK' 0;
+    font-size: 15.5px; line-height: 1.25;
+  }
+  .recent-card .rec-row .rec-source {
+    font-family: var(--mono); font-size: 11px; color: var(--ink-mute);
+  }
+  .recent-card .rec-row:hover { background: var(--paper-deep); cursor: pointer; }
+
+  /* TOPIC heatmap */
+  .topic-card {
+    grid-column: span 2;
+  }
+  .topic-card .heat {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 130px repeat(14, 1fr);
+    gap: 2px;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mute);
+  }
+  .topic-card .heat .row-label {
+    align-self: center;
+    padding-right: 8px;
+    color: var(--ink); font-size: 11px;
+    font-family: var(--ui); font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .topic-card .heat .cell {
+    aspect-ratio: 1 / 1;
+    background: var(--paper-deep);
+    border: var(--rule-w) solid var(--rule);
+    position: relative;
+  }
+  .topic-card .heat .cell.l1 { background: rgba(47,79,62,0.20); }
+  .topic-card .heat .cell.l2 { background: rgba(47,79,62,0.45); }
+  .topic-card .heat .cell.l3 { background: rgba(47,79,62,0.75); }
+  .topic-card .heat .cell.l4 { background: var(--verdigris); }
+  .topic-card .heat .cell.warn { background: rgba(200,51,28,0.35); }
+  .topic-card .heat .col-label { text-align: center; align-self: end; font-size: 9px; padding-bottom: 4px; }
+
+  .topic-card .legend {
+    display: flex; gap: 14px; align-items: center;
+    margin-top: 16px;
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-mute);
+  }
+  .topic-card .legend .lg { display: inline-flex; align-items: center; gap: 4px; }
+  .topic-card .legend .sw {
+    width: 12px; height: 12px;
+    border: var(--rule-w) solid var(--rule);
+  }
+
+  /* NOTIFICATIONS card */
+  .notif-card { display: flex; flex-direction: column; }
+  .notif-list { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .notif-item {
+    border-left: 3px solid var(--rule);
+    padding: 8px 12px;
+    background: var(--paper);
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .notif-item:hover { background: var(--paper-deep); }
+  .notif-item.approve { border-color: var(--verdigris); }
+  .notif-item.revise { border-color: var(--ochre); }
+  .notif-item.reject { border-color: var(--vermilion); }
+  .notif-item.system { border-color: var(--lapis); }
+  .notif-item .ni-head {
+    font-family: var(--ui); font-size: 10.5px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 4px;
+    display: flex; justify-content: space-between;
+  }
+  .notif-item.approve .ni-head .what { color: var(--verdigris); }
+  .notif-item.revise .ni-head .what { color: var(--ochre); }
+  .notif-item.reject .ni-head .what { color: var(--vermilion); }
+  .notif-item.system .ni-head .what { color: var(--lapis); }
+  .notif-item .ni-head .when { color: var(--ink-mute); font-weight: 500; letter-spacing: 0.06em; font-family: var(--mono); font-size: 10px; }
+  .notif-item .ni-body { font-family: var(--reading); font-size: 13.5px; line-height: 1.45; color: var(--ink-soft); }
+  .notif-item .ni-body strong { color: var(--ink); font-weight: 500; }
+
+  /* SETTINGS quick link */
+  .settings-card {
+    background: var(--paper-deep);
+  }
+  .settings-card ul {
+    list-style: none; margin-top: 14px;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .settings-card li {
+    padding: 12px 0;
+    border-bottom: var(--rule-w) dashed var(--rule);
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer;
+    font-family: var(--ui); font-size: 13.5px;
+    color: var(--ink); font-weight: 500;
+  }
+  .settings-card li:last-child { border-bottom: 0; }
+  .settings-card li:hover .arrow { transform: translateX(3px); }
+  .settings-card li .arrow {
+    font-family: var(--display); font-style: italic;
+    color: var(--ink-mute);
+    transition: transform .2s;
+  }
+  .settings-card li .meta {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-mute);
+  }
+
+  @media (max-width: 1100px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+    .grid > * { border-right: var(--rule-w) solid var(--rule); }
+    .grid > *:nth-child(3n) { border-right: var(--rule-w) solid var(--rule); }
+    .grid > *:nth-child(2n) { border-right: 0; }
+    .recent-card, .topic-card, .trust-card { grid-column: span 2; }
+    .greet .container { grid-template-columns: 1fr; }
+    .greet .ts { text-align: left; }
+    .topic-card .heat { grid-template-columns: 110px repeat(7, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="brand">
+    <span class="brand-mark">Veritasee<sup>°</sup></span>
+    <span class="brand-tag">Override · Contributor</span>
+  </div>
+  <nav>
+    <a href="landing.html">Read</a>
+    <a href="editor.html">Contribute</a>
+    <a href="moderator.html">Moderate</a>
+    <a href="dashboard.html" class="active">Ledger</a>
+  </nav>
+  <div class="meta">
+    <span>P.REYES · TRUST 247</span>
+    <span class="sep">·</span>
+    <span>11 PUBLISHED · 3 PENDING</span>
+  </div>
+</header>
+
+<section class="greet">
+  <div class="container">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>Monday · 2026·05·18 · Edition 142</div>
+      <h1 class="mt-3 reveal delay-0">Good morning,<br/><em>p.reyes.</em></h1>
+      <p class="lede reveal delay-1">Three of your submissions are in moderator queues. One of yours just earned <strong>+10 trust</strong> overnight. You're 53 points from <strong>T1 auto-approval</strong>.</p>
+    </div>
+    <div class="ts reveal delay-2">
+      <div><strong>P95 read</strong> · 2.41s</div>
+      <div><strong>Approval rate (you)</strong> · 91%</div>
+      <div><strong>Median decision</strong> · 14.2h</div>
+      <div><strong>Today's quota</strong> · 4 / 10 deep</div>
+    </div>
+  </div>
+</section>
+
+<main class="grid">
+
+  <!-- TRUST POINTS -->
+  <section class="trust-card reveal delay-0">
+    <div class="eyebrow"><span class="dot"></span>§ 14.2 — Trust points · 180-day half-life</div>
+    <div class="trust-main">
+      <div class="stat-num">247<span class="delta">+16 / 7d</span></div>
+      <div>
+        <div class="stat-body">Your current score after decay. Earned <em>+82 across 8 events</em> over the past 30 days; <em>−18 from one revision</em>.</div>
+        <div class="next-threshold">
+          <span><strong>+ 53</strong> until T1 — auto-approve minor edits in your topic scope</span>
+          <div class="bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="trust-events">
+      <div class="te-row">
+        <span class="te-delta pos">+ 10</span>
+        <span class="te-evt">Correction approved · Treaty of Verdun · § Partition</span>
+        <span class="te-when">14h ago</span>
+        <span class="te-decay">→ +9.7 at 30d</span>
+      </div>
+      <div class="te-row">
+        <span class="te-delta pos">+ 06</span>
+        <span class="te-evt">Approved after revision · Ada Lovelace · § Notes length</span>
+        <span class="te-when">2d ago</span>
+        <span class="te-decay">→ +5.9 at 30d</span>
+      </div>
+      <div class="te-row">
+        <span class="te-delta pos">+ 02</span>
+        <span class="te-evt">Reference cited by another contributor · Bodleian ms.</span>
+        <span class="te-when">3d ago</span>
+        <span class="te-decay">→ +1.96 at 30d</span>
+      </div>
+      <div class="te-row">
+        <span class="te-delta neg">− 05</span>
+        <span class="te-evt">Correction rejected · Wikipedia · § Tordesillas date precision</span>
+        <span class="te-when">6d ago</span>
+        <span class="te-decay">→ −4.88 at 30d</span>
+      </div>
+      <div class="te-row">
+        <span class="te-delta pos">+ 10</span>
+        <span class="te-evt">Correction approved · Curie · § Nobel sharing</span>
+        <span class="te-when">8d ago</span>
+        <span class="te-decay">→ +9.75 at 30d</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUOTA -->
+  <section class="quota-card reveal delay-1">
+    <div class="eyebrow"><span class="dot"></span>FR-LIM · AI verifications</div>
+    <h3 class="mt-3">Today's quota</h3>
+    <p class="sub">Resets at 00:00 UTC. Admins can grant overrides for research bursts.</p>
+
+    <div class="meters">
+      <div class="meter">
+        <div class="mhead">
+          <span class="mname">Deep · Academic / Adversarial</span>
+          <span class="mval">4<span class="of">/ 10</span></span>
+        </div>
+        <div class="mbar"><span class="mfill" style="width:40%;"></span></div>
+      </div>
+      <div class="meter">
+        <div class="mhead">
+          <span class="mname">Fast check</span>
+          <span class="mval">12<span class="of">/ 50</span></span>
+        </div>
+        <div class="mbar"><span class="mfill" style="width:24%;"></span></div>
+      </div>
+      <div class="meter">
+        <div class="mhead">
+          <span class="mname">Cost spent today</span>
+          <span class="mval">$ 0.42</span>
+        </div>
+        <div class="mbar"><span class="mfill warn" style="width:14%;"></span></div>
+      </div>
+    </div>
+
+    <div class="reset-line">
+      <span>Resets in <strong style="color:var(--ink);">14h 18m</strong></span>
+      <span>Provider · Anthropic · BYOK off</span>
+    </div>
+  </section>
+
+  <!-- NOTIFICATIONS -->
+  <section class="notif-card reveal delay-2">
+    <div class="eyebrow"><span class="dot"></span>§ Notifications · 6 new</div>
+    <h3 class="mt-3">From moderators</h3>
+    <p class="sub">Decisions on your submissions and system events that need your attention.</p>
+
+    <div class="notif-list">
+      <div class="notif-item approve">
+        <div class="ni-head"><span class="what">Approved</span><span class="when">14h ago</span></div>
+        <div class="ni-body"><strong>l.xu</strong> approved your correction on <strong>Treaty of Verdun · § Partition</strong>. Note: &ldquo;Strong primary-source citation; clean drift on the &lsquo;summer 843&rsquo; phrasing.&rdquo;</div>
+      </div>
+      <div class="notif-item revise">
+        <div class="ni-head"><span class="what">Needs revision</span><span class="when">19h ago</span></div>
+        <div class="ni-body"><strong>a.morisot</strong> requested a revision on <strong>Ada Lovelace · § Notes length</strong>. Note: &ldquo;Add specific wordcounts to body, don't rely on rationale.&rdquo;</div>
+      </div>
+      <div class="notif-item system">
+        <div class="ni-head"><span class="what">Drift detected</span><span class="when">1d ago</span></div>
+        <div class="ni-body">The source for your correction on <strong>Marie Curie · § First Nobel</strong> changed. Fuzzy re-anchor succeeded; no action required, but you may want to review.</div>
+      </div>
+      <div class="notif-item approve">
+        <div class="ni-head"><span class="what">Auto-approved</span><span class="when">2d ago</span></div>
+        <div class="ni-body"><strong>l.xu (mod)</strong> approved <strong>Ada Lovelace · § Notes length</strong> after revision. <span style="color:var(--verdigris); font-weight:500;">+6 trust.</span></div>
+      </div>
+      <div class="notif-item reject">
+        <div class="ni-head"><span class="what">Rejected</span><span class="when">6d ago</span></div>
+        <div class="ni-body"><strong>a.morisot</strong> rejected your correction on <strong>Tordesillas · § Date precision</strong>. Reason: &ldquo;Primary-source claim contradicted by Davenport 1917.&rdquo; <span style="color:var(--vermilion); font-weight:500;">−5 trust.</span></div>
+      </div>
+      <div class="notif-item system">
+        <div class="ni-head"><span class="what">Threshold near</span><span class="when">1w ago</span></div>
+        <div class="ni-body">You're 53 points from <strong>T1 auto-approval</strong> in your scope. Sustain your current cadence for ~2 weeks to cross.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECENT ACTIVITY -->
+  <section class="recent-card reveal delay-3">
+    <div class="row between baseline">
+      <div>
+        <div class="eyebrow"><span class="dot"></span>§ Your submissions · last 30 days</div>
+        <h3 class="mt-3">Recent corrections</h3>
+        <p class="sub">11 submitted · 8 approved · 1 revised + approved · 1 rejected · 1 pending</p>
+      </div>
+      <a class="btn btn-ghost" href="editor.html">New correction <span class="arrow">→</span></a>
+    </div>
+
+    <div class="recent-table">
+      <div class="rec-row head">
+        <span class="rec-when">Submitted</span>
+        <span>Subject</span>
+        <span>Source</span>
+        <span>Verity</span>
+        <span>State</span>
+        <span>Trust Δ</span>
+      </div>
+      <div class="rec-row">
+        <span class="rec-when">2026·05·18 07:01</span>
+        <span class="rec-title">3× length claim is closer to 2.5×</span>
+        <span class="rec-source">en.wikipedia.org · Ada Lovelace</span>
+        <span><span class="verity-chip low" style="font-size:9.5px; padding:2px 8px 2px 2px;"><span class="num" style="width:20px;height:20px;font-size:11px;">28</span></span></span>
+        <span><span class="pill outline-vermilion"><span class="dot"></span>In review</span></span>
+        <span style="font-family:var(--mono); color:var(--ink-mute);">— · pending</span>
+      </div>
+      <div class="rec-row">
+        <span class="rec-when">2026·05·17 18:42</span>
+        <span class="rec-title">Tordesillas — negotiation framing reversed</span>
+        <span class="rec-source">en.wikipedia.org · Treaty of T.</span>
+        <span><span class="verity-chip low" style="font-size:9.5px; padding:2px 8px 2px 2px;"><span class="num" style="width:20px;height:20px;font-size:11px;">22</span></span></span>
+        <span><span class="pill outline-vermilion"><span class="dot"></span>Past SLA</span></span>
+        <span style="font-family:var(--mono); color:var(--ink-mute);">— · pending</span>
+      </div>
+      <div class="rec-row">
+        <span class="rec-when">2026·05·16 14:08</span>
+        <span class="rec-title">Lovelace Notes — second pass after revision</span>
+        <span class="rec-source">en.wikipedia.org · Ada Lovelace</span>
+        <span><span class="verity-chip med" style="font-size:9.5px; padding:2px 8px 2px 2px;"><span class="num" style="width:20px;height:20px;font-size:11px;">64</span></span></span>
+        <span><span class="pill outline-verdigris"><span class="dot"></span>Approved</span></span>
+        <span style="font-family:var(--mono); color:var(--verdigris); font-weight:600;">+ 6</span>
+      </div>
+      <div class="rec-row">
+        <span class="rec-when">2026·05·14 10:12</span>
+        <span class="rec-title">Verdun · &ldquo;summer 843&rdquo; → August 843</span>
+        <span class="rec-source">en.wikipedia.org · Treaty of V.</span>
+        <span><span class="verity-chip high" style="font-size:9.5px; padding:2px 8px 2px 2px;"><span class="num" style="width:20px;height:20px;font-size:11px;">86</span></span></span>
+        <span><span class="pill outline-verdigris"><span class="dot"></span>Approved</span></span>
+        <span style="font-family:var(--mono); color:var(--verdigris); font-weight:600;">+ 10</span>
+      </div>
+      <div class="rec-row">
+        <span class="rec-when">2026·05·12 22:51</span>
+        <span class="rec-title">Curie · Nobel 1903 was shared</span>
+        <span class="rec-source">britannica.com · Marie Curie</span>
+        <span><span class="verity-chip high" style="font-size:9.5px; padding:2px 8px 2px 2px;"><span class="num" style="width:20px;height:20px;font-size:11px;">93</span></span></span>
+        <span><span class="pill outline-verdigris"><span class="dot"></span>Approved</span></span>
+        <span style="font-family:var(--mono); color:var(--verdigris); font-weight:600;">+ 10</span>
+      </div>
+      <div class="rec-row">
+        <span class="rec-when">2026·05·11 09:37</span>
+        <span class="rec-title">Tordesillas · date precision (rejected)</span>
+        <span class="rec-source">en.wikipedia.org · Treaty of T.</span>
+        <span><span class="verity-chip med" style="font-size:9.5px; padding:2px 8px 2px 2px;"><span class="num" style="width:20px;height:20px;font-size:11px;">52</span></span></span>
+        <span><span class="pill solid-vermilion"><span class="dot" style="background:var(--paper);"></span>Rejected</span></span>
+        <span style="font-family:var(--mono); color:var(--vermilion); font-weight:600;">− 5</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOPIC HEATMAP -->
+  <section class="topic-card reveal delay-4">
+    <div class="row between baseline">
+      <div>
+        <div class="eyebrow"><span class="dot"></span>§ Activity by topic · 14 weeks</div>
+        <h3 class="mt-3">Your topical density</h3>
+        <p class="sub">Auto-approve eligibility at v1.2 will route by topic scope. Your highest concentration: <em>History</em> and <em>Technology</em>.</p>
+      </div>
+      <span class="pill"><span class="dot"></span>You · history · technology</span>
+    </div>
+
+    <div class="heat">
+      <span></span>
+      <span class="col-label">w1</span><span class="col-label">w2</span><span class="col-label">w3</span><span class="col-label">w4</span>
+      <span class="col-label">w5</span><span class="col-label">w6</span><span class="col-label">w7</span><span class="col-label">w8</span>
+      <span class="col-label">w9</span><span class="col-label">w10</span><span class="col-label">w11</span><span class="col-label">w12</span>
+      <span class="col-label">w13</span><span class="col-label">w14</span>
+
+      <span class="row-label">History</span>
+      <span class="cell l2"></span><span class="cell l3"></span><span class="cell l1"></span><span class="cell l2"></span>
+      <span class="cell l3"></span><span class="cell l4"></span><span class="cell l4"></span><span class="cell l3"></span>
+      <span class="cell l2"></span><span class="cell l3"></span><span class="cell l4"></span><span class="cell l4"></span>
+      <span class="cell l4"></span><span class="cell l3"></span>
+
+      <span class="row-label">Technology</span>
+      <span class="cell"></span><span class="cell l1"></span><span class="cell l1"></span><span class="cell l2"></span>
+      <span class="cell l2"></span><span class="cell l3"></span><span class="cell l3"></span><span class="cell l2"></span>
+      <span class="cell l3"></span><span class="cell l4"></span><span class="cell l3"></span><span class="cell l3"></span>
+      <span class="cell l2"></span><span class="cell l3"></span>
+
+      <span class="row-label">Science</span>
+      <span class="cell"></span><span class="cell"></span><span class="cell l1"></span><span class="cell l1"></span>
+      <span class="cell"></span><span class="cell l2"></span><span class="cell l1"></span><span class="cell"></span>
+      <span class="cell l1"></span><span class="cell l2"></span><span class="cell l1"></span><span class="cell warn"></span>
+      <span class="cell l1"></span><span class="cell"></span>
+
+      <span class="row-label">Biography</span>
+      <span class="cell l1"></span><span class="cell l1"></span><span class="cell"></span><span class="cell l1"></span>
+      <span class="cell l1"></span><span class="cell l1"></span><span class="cell l2"></span><span class="cell l1"></span>
+      <span class="cell l2"></span><span class="cell l2"></span><span class="cell l1"></span><span class="cell l1"></span>
+      <span class="cell l1"></span><span class="cell l2"></span>
+
+      <span class="row-label">Politics & gov.</span>
+      <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span>
+      <span class="cell"></span><span class="cell l1"></span><span class="cell"></span><span class="cell"></span>
+      <span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell l1"></span>
+      <span class="cell"></span><span class="cell"></span>
+    </div>
+
+    <div class="legend">
+      <span>Less</span>
+      <span class="lg"><span class="sw"></span></span>
+      <span class="lg"><span class="sw" style="background:rgba(47,79,62,0.20);"></span></span>
+      <span class="lg"><span class="sw" style="background:rgba(47,79,62,0.45);"></span></span>
+      <span class="lg"><span class="sw" style="background:rgba(47,79,62,0.75);"></span></span>
+      <span class="lg"><span class="sw" style="background:var(--verdigris);"></span></span>
+      <span>More</span>
+      <span style="margin-left: 24px;">·</span>
+      <span class="lg"><span class="sw" style="background:rgba(200,51,28,0.35);"></span></span>
+      <span>Rejection cluster</span>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="settings-card reveal delay-5">
+    <div class="eyebrow"><span class="dot"></span>§ 5.3.2 — Provider settings</div>
+    <h3 class="mt-3">AI &amp; account</h3>
+    <p class="sub">Override platform defaults for your account. BYO key uses your encrypted credential.</p>
+
+    <ul>
+      <li>
+        <span>Default provider</span>
+        <span class="meta">Anthropic · Claude Opus 4.7 <span class="arrow"> →</span></span>
+      </li>
+      <li>
+        <span>Default scenario</span>
+        <span class="meta">Academic <span class="arrow"> →</span></span>
+      </li>
+      <li>
+        <span>BYO key</span>
+        <span class="meta">Not configured <span class="arrow"> →</span></span>
+      </li>
+      <li>
+        <span>Cost cap (monthly)</span>
+        <span class="meta">$ 25.00 / $ 50.00 platform <span class="arrow"> →</span></span>
+      </li>
+      <li>
+        <span>Topic interests</span>
+        <span class="meta">History · Technology · Biography <span class="arrow"> →</span></span>
+      </li>
+      <li>
+        <span>Data region</span>
+        <span class="meta">EU <span class="arrow"> →</span></span>
+      </li>
+      <li>
+        <span>Notification cadence</span>
+        <span class="meta">Real-time · weekly digest <span class="arrow"> →</span></span>
+      </li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="ledger-foot">
+  <div>VERITASEE · CONTRIBUTOR LEDGER · P.REYES</div>
+  <div>247 TRUST · T1 IN 53 PTS · T2 IN 353 PTS</div>
+  <div>2026·05·18 · 09:42 UTC · EDITION 142</div>
+</footer>
+
+</body>
+</html>

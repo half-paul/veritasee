@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Extension popup — Veritasee Override</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  body {
+    display: grid; place-items: center;
+    min-height: 100vh;
+    padding: 40px;
+    background: var(--paper-deep);
+  }
+  body::before { opacity: 0.2; }
+
+  .preview-stage {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 48px;
+    max-width: 1100px;
+    width: 100%;
+    align-items: start;
+  }
+
+  .browser-chrome {
+    width: 380px;
+    background: var(--paper);
+    border: var(--rule-w-bold) solid var(--ink);
+    box-shadow: 10px 10px 0 var(--paper-edge);
+    overflow: hidden;
+  }
+  .browser-bar {
+    background: var(--ink);
+    padding: 8px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .browser-bar .dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: rgba(242,237,226,0.18);
+  }
+  .browser-bar .url {
+    flex: 1;
+    background: rgba(242,237,226,0.10);
+    padding: 4px 10px;
+    font-family: var(--mono); font-size: 10.5px;
+    color: rgba(242,237,226,0.7);
+    margin-left: 8px;
+  }
+  .browser-bar .ext {
+    display: grid; place-items: center;
+    width: 22px; height: 22px;
+    background: var(--vermilion);
+    color: var(--paper);
+    font-family: var(--display); font-size: 14px;
+    font-variation-settings: 'wght' 700, 'WONK' 1;
+  }
+
+  /* popup body */
+  .popup {
+    padding: 18px 20px 20px;
+  }
+  .popup .head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: var(--rule-w) solid var(--rule);
+    margin-bottom: 14px;
+  }
+  .popup .head .brand {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 36, 'SOFT' 50, 'WONK' 1, 'wght' 600;
+    font-size: 20px;
+  }
+  .popup .head .brand sup { font-size: 9px; color: var(--vermilion); vertical-align: super; }
+
+  .popup .domain {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--paper-deep);
+    border: var(--rule-w) solid var(--rule);
+    margin-bottom: 12px;
+  }
+  .popup .domain .dn {
+    font-family: var(--mono); font-size: 12px;
+    color: var(--ink); font-weight: 500;
+  }
+  .popup .domain .toggle {
+    width: 36px; height: 20px;
+    background: var(--verdigris);
+    position: relative;
+    cursor: pointer;
+  }
+  .popup .domain .toggle::after {
+    content: ''; position: absolute;
+    width: 16px; height: 16px;
+    background: var(--paper);
+    top: 2px; right: 2px;
+    transition: right .15s;
+  }
+  .popup .domain.off .toggle { background: var(--ink-mute); }
+  .popup .domain.off .toggle::after { right: 18px; }
+
+  .popup .count-bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 16px;
+    background: var(--ink); color: var(--paper);
+    margin-bottom: 14px;
+  }
+  .popup .count-bar .num {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 60, 'SOFT' 50, 'WONK' 1, 'wght' 500;
+    font-size: 42px; line-height: 0.9;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .popup .count-bar .label {
+    font-family: var(--ui); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(242,237,226,0.7); font-weight: 700;
+    line-height: 1.5;
+  }
+  .popup .count-bar .label strong { color: var(--paper); }
+  .popup .count-bar .verity {
+    display: flex; flex-direction: column; align-items: end; gap: 2px;
+    font-family: var(--mono); font-size: 10.5px;
+    color: rgba(242,237,226,0.7);
+  }
+  .popup .count-bar .verity .v {
+    font-family: var(--display);
+    font-variation-settings: 'WONK' 1, 'wght' 600;
+    font-size: 22px; color: var(--ochre-soft);
+    line-height: 1;
+  }
+
+  .popup .list {
+    display: flex; flex-direction: column; gap: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 2px;
+  }
+  .popup .ovrow {
+    border-left: 3px solid var(--rule);
+    padding: 8px 10px;
+    background: var(--paper);
+    border-top: var(--rule-w) solid var(--rule);
+    border-right: var(--rule-w) solid var(--rule);
+    border-bottom: var(--rule-w) solid var(--rule);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .popup .ovrow:hover { background: var(--paper-deep); }
+  .popup .ovrow.approved { border-left-color: var(--verdigris); }
+  .popup .ovrow.pending { border-left-color: var(--vermilion); }
+  .popup .ovrow .ov-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 4px;
+    font-family: var(--ui); font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-mute); font-weight: 600;
+  }
+  .popup .ovrow .ov-head .vchip {
+    font-family: var(--display);
+    font-variation-settings: 'wght' 600, 'WONK' 1;
+    font-size: 12px;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    background: var(--paper-deep);
+    padding: 1px 6px;
+    border-radius: 999px;
+  }
+  .popup .ovrow.approved .vchip { color: var(--verdigris); }
+  .popup .ovrow.pending .vchip { color: var(--vermilion); }
+  .popup .ovrow .ov-snip {
+    font-family: var(--reading); font-size: 12.5px;
+    line-height: 1.45; color: var(--ink); margin-bottom: 4px;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .popup .ovrow .ov-foot {
+    font-family: var(--mono); font-size: 9.5px;
+    color: var(--ink-mute);
+    display: flex; gap: 6px;
+  }
+
+  .popup .actions {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: var(--rule-w) solid var(--rule);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .popup .actions .act {
+    padding: 10px 12px;
+    background: var(--paper);
+    border: var(--rule-w) solid var(--rule);
+    font-family: var(--ui); font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 700; cursor: pointer;
+    color: var(--ink); text-align: center;
+  }
+  .popup .actions .act:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .popup .actions .act.vermilion {
+    background: var(--vermilion); color: var(--paper); border-color: var(--vermilion);
+  }
+  .popup .actions .act.vermilion:hover { background: var(--vermilion-deep); border-color: var(--vermilion-deep); }
+
+  .popup .foot {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: var(--rule-w) dashed var(--rule);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mute);
+  }
+  .popup .foot .signed-in { display: flex; align-items: center; gap: 6px; }
+  .popup .foot .signed-in .avi {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--ink); color: var(--paper);
+    display: grid; place-items: center;
+    font-family: var(--display); font-size: 7.5px;
+    font-variation-settings: 'wght' 700;
+  }
+  .popup .foot a { color: var(--lapis); text-decoration: none; border-bottom: 1px solid var(--lapis); }
+
+  /* annotations to the right */
+  .notes {
+    padding: 24px;
+    color: var(--ink);
+  }
+  .notes .eyebrow { color: var(--vermilion); }
+  .notes h2 {
+    font-size: 38px;
+    font-variation-settings: 'opsz' 60, 'SOFT' 60, 'WONK' 1, 'wght' 500;
+    line-height: 0.98; margin: 8px 0 16px;
+    letter-spacing: -0.025em;
+  }
+  .notes h2 em { color: var(--vermilion); font-style: italic; }
+  .notes .lede {
+    font-family: var(--reading); font-size: 17px;
+    line-height: 1.55; color: var(--ink-soft);
+    max-width: 42ch;
+    margin-bottom: 26px;
+  }
+  .notes ul.specs {
+    list-style: none;
+    border-left: 3px solid var(--ink);
+    padding-left: 18px;
+    display: flex; flex-direction: column; gap: 14px;
+    max-width: 48ch;
+  }
+  .notes ul.specs li {
+    font-family: var(--reading); font-size: 14.5px;
+    line-height: 1.55; color: var(--ink-soft);
+  }
+  .notes ul.specs li strong {
+    display: block; color: var(--ink); font-weight: 500;
+    font-family: var(--ui); font-size: 10.5px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .notes .crumb {
+    margin-top: 26px;
+    padding: 14px 16px;
+    background: var(--ink); color: var(--paper);
+    font-family: var(--mono); font-size: 11.5px;
+    line-height: 1.6;
+  }
+  .notes .crumb strong { color: var(--ochre-soft); }
+
+  .back-link {
+    position: fixed; top: 24px; left: 24px;
+    font-family: var(--ui); font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-soft); text-decoration: none;
+    border-bottom: var(--rule-w) solid var(--ink);
+    padding-bottom: 2px;
+  }
+
+  @media (max-width: 880px) {
+    .preview-stage { grid-template-columns: 1fr; }
+    .browser-chrome { margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+
+<a href="index.html" class="back-link">← back to overview</a>
+
+<div class="preview-stage">
+
+  <div class="browser-chrome">
+    <div class="browser-bar">
+      <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      <span class="url">en.wikipedia.org/wiki/Ada_Lovelace</span>
+      <span class="ext">V<sup style="font-size:6px;">°</sup></span>
+    </div>
+
+    <div class="popup">
+      <div class="head">
+        <span class="brand">Veritasee<sup>°</sup> Override</span>
+        <span class="pill outline-verdigris" style="font-size:9px; padding:2px 7px;"><span class="dot"></span>v0.1</span>
+      </div>
+
+      <div class="domain">
+        <span class="dn">en.wikipedia.org</span>
+        <span class="toggle"></span>
+      </div>
+
+      <div class="count-bar">
+        <div class="num">5</div>
+        <div class="label">overrides on<br/><strong>this page</strong></div>
+        <div class="verity">
+          <span class="v">82</span>
+          <span>VERITY</span>
+        </div>
+      </div>
+
+      <div class="list">
+        <div class="ovrow approved">
+          <div class="ov-head"><span>§ Biography · ¶ 1</span><span class="vchip">91</span></div>
+          <div class="ov-snip">Byron left England 25 April 1816 — roughly four months after Ada's birth on 10 December 1815.</div>
+          <div class="ov-foot"><span>s.okwu</span> · <span>3 refs</span> · <span>Approved</span></div>
+        </div>
+        <div class="ovrow pending">
+          <div class="ov-head"><span>§ Biography · ¶ 2</span><span class="vchip">64</span></div>
+          <div class="ov-snip">William King-Noel created Earl of Lovelace on 30 June 1838 specifically — adding precise date.</div>
+          <div class="ov-foot"><span>h.kovac</span> · <span>1 ref</span> · <span>In review</span></div>
+        </div>
+        <div class="ovrow approved">
+          <div class="ov-head"><span>§ Analytical Engine · ¶ 3</span><span class="vchip">28</span></div>
+          <div class="ov-snip">The 3× length figure is loose. By word count, Notes are closer to 2.5× the length of Menabrea's paper.</div>
+          <div class="ov-foot"><span>p.reyes</span> · <span>2 refs</span> · <span>Needs revision</span></div>
+        </div>
+        <div class="ovrow approved">
+          <div class="ov-head"><span>§ Legacy · ¶ 1</span><span class="vchip">96</span></div>
+          <div class="ov-snip">MIL-STD-1815 designation for the language Ada was assigned in December 1980; informal naming preceded …</div>
+          <div class="ov-foot"><span>l.xu</span> · <span>1 ref</span> · <span>Approved</span></div>
+        </div>
+        <div class="ovrow approved">
+          <div class="ov-head"><span>§ Legacy · ¶ 2</span><span class="vchip">88</span></div>
+          <div class="ov-snip">Ada Lovelace Day was founded by Suw Charman-Anderson in 2009. Article omits this.</div>
+          <div class="ov-foot"><span>a.morisot</span> · <span>1 ref</span> · <span>Approved</span></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="act">Flag for review</button>
+        <button class="act vermilion">Open in proxy →</button>
+      </div>
+
+      <div class="foot">
+        <span class="signed-in"><span class="avi">PR</span> p.reyes · trust 247</span>
+        <a href="#">settings · advanced</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="eyebrow"><span class="dot"></span>§ 5.1 — Browser extension popup · MV3</div>
+    <h2>The overlay <em>follows you</em> to the source.</h2>
+    <p class="lede">For readers who'd rather visit the encyclopedia directly, the extension queries our override API for the current page and injects the same correction layer in-place — no proxy round-trip, no ToS posture.</p>
+
+    <ul class="specs">
+      <li>
+        <strong>VS-040 · Scaffold</strong>
+        Manifest V3 for Chrome and Firefox. Background service worker handles auth + API calls; content script injects overlays in-page.
+      </li>
+      <li>
+        <strong>VS-041 · Inject</strong>
+        Content script queries <code class="mono" style="background:var(--paper-deep); padding:1px 5px;">GET /api/overrides?url=…&anchor=…</code> on page-load and after SPA navigations. Reuses the Reader's correction-panel component, scoped via shadow DOM.
+      </li>
+      <li>
+        <strong>VS-042 · Settings</strong>
+        Per-domain enable/disable toggle (shown here). Global opt-out. Per-domain ToS notice for sites that have asked us to back off.
+      </li>
+      <li>
+        <strong>API latency</strong>
+        P95 ≤ 200 ms for the override lookup. Cached client-side keyed by <code class="mono" style="background:var(--paper-deep); padding:1px 5px;">(url, source_revision_hash)</code> for 5 min.
+      </li>
+    </ul>
+
+    <div class="crumb">
+      <strong>Aesthetic note.</strong> The popup carries the same letterpress chrome — circular verity number, vermilion accent, mono metadata — at miniature scale. The browser frame above is paper-on-ink to read instantly as "external context."
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.querySelector('.popup .domain').addEventListener('click', function(e) {
+    if (e.target.classList.contains('toggle') || e.target.closest('.toggle')) {
+      this.classList.toggle('off');
+    }
+  });
+</script>
+
+</body>
+</html>

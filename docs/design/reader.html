@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Reader — Veritasee Override</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  /* sub-masthead source bar */
+  .source-bar {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 12px 32px;
+    display: flex; align-items: center; gap: 28px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    border-bottom: var(--rule-w) solid var(--ink);
+    flex-wrap: wrap;
+  }
+  .source-bar .crumb {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .source-bar .crumb-label {
+    font-family: var(--ui); font-size: 9.5px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: rgba(242,237,226,0.55);
+  }
+  .source-bar code { color: var(--paper); }
+  .source-bar a { color: var(--ochre-soft); text-decoration: none; }
+  .source-bar a:hover { color: var(--vermilion); }
+  .source-bar .spacer { flex: 1; }
+  .source-bar .controls { display: flex; gap: 14px; align-items: center; }
+  .source-bar .ctrl-btn {
+    font-family: var(--ui); font-size: 10.5px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--paper); background: transparent;
+    border: var(--rule-w) solid rgba(242,237,226,0.25);
+    padding: 6px 12px; cursor: pointer;
+    font-weight: 600;
+  }
+  .source-bar .ctrl-btn.active { background: var(--vermilion); border-color: var(--vermilion); }
+  .source-bar .ctrl-btn:hover { border-color: var(--paper); }
+
+  /* drift banner */
+  .drift-banner {
+    background: var(--vermilion);
+    color: var(--paper);
+    padding: 16px 32px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 28px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .drift-banner::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(
+      -45deg,
+      rgba(0,0,0,0) 0 11px,
+      rgba(0,0,0,0.06) 11px 12px
+    );
+    pointer-events: none;
+  }
+  .drift-banner > * { position: relative; }
+  .drift-banner .stop {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .drift-banner .stop-mark {
+    width: 38px; height: 38px;
+    border: 2.5px solid var(--paper);
+    display: grid; place-items: center;
+    font-family: var(--display);
+    font-variation-settings: 'wght' 700, 'WONK' 1, 'opsz' 18;
+    font-size: 22px;
+    transform: rotate(-4deg);
+    flex-shrink: 0;
+  }
+  .drift-banner .stop-text {
+    font-family: var(--ui);
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .drift-banner .stop-text strong {
+    display: block;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+  }
+  .drift-banner .drift-info {
+    font-family: var(--reading);
+    font-size: 15px;
+    line-height: 1.45;
+    font-variation-settings: 'opsz' 17;
+  }
+  .drift-banner .drift-info code {
+    font-family: var(--mono); font-size: 12.5px;
+    background: rgba(0,0,0,0.18); padding: 1px 6px;
+    border-radius: 2px;
+  }
+  .drift-banner .drift-actions { display: flex; gap: 12px; }
+  .drift-banner .drift-actions .btn {
+    background: var(--paper); color: var(--ink); border-color: var(--paper);
+  }
+  .drift-banner .drift-actions .btn-link {
+    background: transparent; color: var(--paper); border-color: rgba(242,237,226,0.4);
+  }
+
+  /* main reading layout */
+  .reader-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 0;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-left: var(--rule-w) solid var(--rule);
+    border-right: var(--rule-w) solid var(--rule);
+    background: var(--paper);
+    min-height: 100vh;
+  }
+
+  .article-stage {
+    padding: 56px 64px 80px;
+    border-right: var(--rule-w) solid var(--rule);
+    position: relative;
+  }
+  .article-stage .article-meta {
+    display: flex; gap: 14px; align-items: center; margin-bottom: 8px;
+  }
+  .article-stage h1.title {
+    font-size: clamp(44px, 5.5vw, 64px);
+    font-variation-settings: 'opsz' 96, 'SOFT' 50, 'WONK' 1, 'wght' 480;
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    margin-bottom: 20px;
+  }
+  .article-stage .summary {
+    font-family: var(--reading);
+    font-variation-settings: 'opsz' 24;
+    font-size: 21px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    border-left: 3px solid var(--ink);
+    padding-left: 20px;
+    margin-bottom: 36px;
+  }
+
+  .article-stage h2 {
+    font-size: 30px;
+    font-variation-settings: 'opsz' 48, 'WONK' 0;
+    margin: 48px 0 16px;
+    position: relative;
+  }
+  .article-stage h2 .section-anchor {
+    position: absolute; left: -44px; top: 12px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-ghost); letter-spacing: 0.18em;
+  }
+  .article-stage h3 {
+    font-size: 20px;
+    font-variation-settings: 'opsz' 24, 'WONK' 0;
+    margin: 28px 0 10px;
+  }
+
+  .article-stage p {
+    font-family: var(--reading);
+    font-variation-settings: 'opsz' 18;
+    font-size: 18px;
+    line-height: 1.66;
+    color: var(--ink);
+    margin-bottom: 16px;
+    max-width: 64ch;
+  }
+
+  /* correction-marked text */
+  .article-stage mark.flagged {
+    background: linear-gradient(180deg, transparent 58%, rgba(200,51,28,0.18) 58%);
+    color: var(--ink);
+    padding: 0 1px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: wavy;
+    text-decoration-color: var(--vermilion);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    transition: background .15s;
+  }
+  .article-stage mark.flagged:hover { background: linear-gradient(180deg, transparent 30%, rgba(200,51,28,0.30) 30%); }
+  .article-stage mark.flagged.approved { text-decoration-color: var(--verdigris); }
+  .article-stage mark.flagged.approved:hover { background: linear-gradient(180deg, transparent 30%, rgba(47,79,62,0.20) 30%); }
+
+  .article-stage mark.flagged.active {
+    background: var(--vermilion);
+    color: var(--paper);
+    text-decoration: none;
+  }
+
+  /* marginalia column */
+  .marginalia {
+    padding: 28px 24px;
+    display: flex; flex-direction: column; gap: 18px;
+    background:
+      repeating-linear-gradient(180deg, transparent 0 30px, var(--rule-hair) 30px 30.5px);
+    position: sticky;
+    align-self: start;
+    top: 0;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+  .marginalia::-webkit-scrollbar { width: 4px; }
+  .marginalia::-webkit-scrollbar-thumb { background: var(--rule); }
+
+  .marg-head {
+    position: sticky; top: 0;
+    background: var(--paper);
+    padding-bottom: 12px;
+    margin: -28px -24px 0 -24px;
+    padding: 18px 24px 14px;
+    border-bottom: var(--rule-w) solid var(--rule);
+    z-index: 2;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .marg-head .marg-title {
+    font-family: var(--ui); font-size: 11px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 700;
+  }
+  .marg-head .marg-count {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 36, 'WONK' 1, 'wght' 500;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+  }
+
+  /* correction card */
+  .corr {
+    border: var(--rule-w) solid var(--rule);
+    background: var(--paper);
+    padding: 18px 18px 16px;
+    position: relative;
+    transition: box-shadow .15s, transform .15s;
+    cursor: pointer;
+  }
+  .corr:hover { box-shadow: var(--shadow-paper); transform: translateY(-1px); }
+  .corr.active { border-color: var(--vermilion); box-shadow: -3px 0 0 var(--vermilion); }
+
+  .corr .corr-anchor {
+    position: absolute; top: -12px; left: -12px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--ink); color: var(--paper);
+    display: grid; place-items: center;
+    font-family: var(--display);
+    font-variation-settings: 'wght' 600;
+    font-size: 13px;
+    border: 2px solid var(--paper);
+    box-shadow: 0 2px 6px rgba(26,20,12,0.2);
+  }
+  .corr.approved .corr-anchor { background: var(--verdigris); }
+  .corr.pending .corr-anchor { background: var(--vermilion); }
+  .corr.review .corr-anchor { background: var(--ochre); color: var(--ink); }
+
+  .corr .corr-top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .corr .corr-body {
+    font-family: var(--reading);
+    font-variation-settings: 'opsz' 17;
+    font-size: 14.5px;
+    line-height: 1.55;
+    color: var(--ink);
+  }
+  .corr .corr-body strong { font-weight: 500; color: var(--vermilion); }
+
+  .corr .corr-refs {
+    margin-top: 12px; padding-top: 10px;
+    border-top: var(--rule-w) dashed var(--rule);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .corr .corr-refs .ref {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-mute); line-height: 1.5;
+    display: flex; gap: 8px;
+  }
+  .corr .corr-refs .ref .ref-num {
+    color: var(--vermilion); font-weight: 700;
+  }
+  .corr .corr-refs .ref a { color: var(--lapis); text-decoration: none; border-bottom: 1px solid var(--lapis); }
+
+  .corr .corr-foot {
+    margin-top: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mute);
+  }
+  .corr .corr-foot .who { display: flex; align-items: center; gap: 6px; }
+  .corr .corr-foot .who .avi {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--ink); color: var(--paper);
+    display: grid; place-items: center;
+    font-family: var(--display); font-size: 9px;
+    font-variation-settings: 'wght' 600;
+  }
+
+  /* article-level Verity score panel (sticky top-right within marginalia) */
+  .article-score {
+    border: var(--rule-w-bold) solid var(--ink);
+    background: var(--paper);
+    padding: 18px 20px 20px;
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 18px;
+    align-items: center;
+  }
+  .article-score .score-meta {
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .article-score .score-meta .score-label {
+    font-family: var(--ui); font-size: 9.5px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ink-mute); font-weight: 700;
+  }
+  .article-score .score-meta .score-body {
+    font-family: var(--reading);
+    font-variation-settings: 'opsz' 17;
+    font-size: 13.5px;
+    line-height: 1.45; color: var(--ink-soft);
+  }
+  .article-score .score-meta .score-stats {
+    margin-top: 4px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-mute);
+  }
+
+  /* floating flag-for-review */
+  .flag-fab {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    z-index: 40;
+    background: var(--paper);
+    border: var(--rule-w-bold) solid var(--ink);
+    padding: 12px 18px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--ui); font-size: 11px;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--ink);
+    cursor: pointer;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform .15s;
+  }
+  .flag-fab:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink); background: var(--vermilion); color: var(--paper); border-color: var(--vermilion); }
+  .flag-fab .icn {
+    width: 16px; height: 16px;
+    background: var(--vermilion); display: grid; place-items: center;
+    color: var(--paper); font-family: var(--display);
+    font-size: 13px; font-variation-settings: 'wght' 700;
+  }
+  .flag-fab:hover .icn { background: var(--paper); color: var(--vermilion); }
+
+  /* image figure */
+  figure.fig {
+    margin: 24px 0;
+    border: var(--rule-w) solid var(--rule);
+    padding: 6px;
+    background: var(--paper);
+    max-width: 64ch;
+  }
+  figure.fig .ph {
+    aspect-ratio: 5/3;
+    background: linear-gradient(135deg, var(--paper-edge), var(--paper-deep));
+    border: var(--rule-w) solid var(--rule);
+    display: grid; place-items: center;
+    color: var(--ink-mute);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+  }
+  figure.fig figcaption {
+    font-family: var(--reading); font-style: italic;
+    font-size: 13px; color: var(--ink-mute);
+    padding: 10px 4px 4px;
+    line-height: 1.5;
+  }
+
+  /* read-progress reading rail */
+  .rail {
+    position: fixed; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--rule);
+    z-index: 100;
+  }
+  .rail .rail-fill { height: 100%; width: 22%; background: var(--vermilion); }
+
+  @media (max-width: 1100px) {
+    .reader-layout { grid-template-columns: 1fr; }
+    .marginalia { position: relative; max-height: none; }
+    .article-stage { padding: 32px 28px; border-right: 0; border-bottom: var(--rule-w) solid var(--rule); }
+  }
+</style>
+</head>
+<body>
+
+<div class="rail"><div class="rail-fill"></div></div>
+
+<header class="masthead">
+  <div class="brand">
+    <span class="brand-mark">Veritasee<sup>°</sup></span>
+    <span class="brand-tag">Override · Reader</span>
+  </div>
+  <nav>
+    <a href="landing.html">Read</a>
+    <a href="editor.html">Contribute</a>
+    <a href="moderator.html">Moderate</a>
+    <a href="dashboard.html">Ledger</a>
+  </nav>
+  <div class="meta">
+    <span>P95 · 2.41s</span>
+    <span class="sep">·</span>
+    <span>CACHE · HIT</span>
+  </div>
+</header>
+
+<!-- source meta strip -->
+<div class="source-bar">
+  <div class="crumb">
+    <span class="crumb-label">Source</span>
+    <a href="#">en.wikipedia.org / wiki / Ada_Lovelace</a>
+  </div>
+  <div class="crumb">
+    <span class="crumb-label">Rev</span>
+    <code>a4f2e1c83b…</code>
+  </div>
+  <div class="crumb">
+    <span class="crumb-label">Fetched</span>
+    <code>2026·05·18 08:14:22 UTC</code>
+  </div>
+  <div class="crumb">
+    <span class="crumb-label">Snapshot</span>
+    <a href="#">view pinned ↗</a>
+  </div>
+  <span class="spacer"></span>
+  <div class="controls">
+    <button class="ctrl-btn active">Overlays · On</button>
+    <button class="ctrl-btn">Approved only</button>
+    <button class="ctrl-btn">Expand all</button>
+  </div>
+</div>
+
+<!-- drift banner -->
+<div class="drift-banner">
+  <div class="stop">
+    <div class="stop-mark">!</div>
+    <div class="stop-text">
+      <strong>Stop press</strong>
+      Source has changed
+    </div>
+  </div>
+  <div class="drift-info">
+    The source article was edited <strong>3 hours after</strong> these corrections were anchored. Fuzzy re-anchor succeeded for 4 of 5 corrections; one fell back to the pinned snapshot at revision <code>a4f2e1c83b</code>.
+  </div>
+  <div class="drift-actions">
+    <a class="btn" href="#">Compare revisions <span class="arrow">→</span></a>
+    <a class="btn btn-link" href="#">Dismiss</a>
+  </div>
+</div>
+
+<main class="reader-layout">
+
+  <article class="article-stage">
+    <div class="article-meta">
+      <span class="eyebrow"><span class="dot"></span>Biography</span>
+      <span class="pill"><span class="dot"></span>Topic · History</span>
+      <span class="pill"><span class="dot"></span>Topic · Technology</span>
+    </div>
+    <h1 class="title reveal delay-0">Ada Lovelace</h1>
+    <p class="summary reveal delay-1">
+      Augusta Ada King, Countess of Lovelace (1815–1852) was an English mathematician and writer, chiefly known for her work on Charles Babbage's proposed mechanical general-purpose computer, the Analytical Engine. Her notes contain what is widely considered the first algorithm intended to be carried out by a machine.
+    </p>
+
+    <figure class="fig reveal delay-2">
+      <div class="ph">[ FIGURE · 1840 watercolor portrait, Alfred Edward Chalon ]</div>
+      <figcaption>Watercolor portrait of Ada King-Noel, Countess of Lovelace, by Alfred Edward Chalon, c. 1840. The original is held by the Government Art Collection.</figcaption>
+    </figure>
+
+    <h2 id="s1"><span class="section-anchor">§ 1</span>Biography</h2>
+    <p>Ada Lovelace was the only legitimate child of the poet Lord Byron and his wife Anne Isabella &ldquo;Annabella&rdquo; Milbanke. All Byron's other children were born out of wedlock to other women. Byron separated from his wife a month after Ada was born and left England forever <mark class="flagged approved" data-corr="1">four months later<sup class="fn">1</sup></mark>. Annabella encouraged Ada's interest in mathematics and logic in an effort to prevent her from developing her father's perceived insanity.</p>
+
+    <p>Despite this, Ada remained interested in him, naming her two sons Byron and Gordon. Upon her death, she was buried next to her father at her request. Although often ill in her childhood, Ada pursued her studies assiduously. She married William King in 1835. King was made <mark class="flagged" data-corr="2">Earl of Lovelace in 1838<sup class="fn">2</sup></mark>, Ada thereby becoming Countess of Lovelace.</p>
+
+    <h2 id="s2"><span class="section-anchor">§ 2</span>Work on the Analytical Engine</h2>
+    <p>In 1840, Charles Babbage was invited to give a seminar at the University of Turin about his Analytical Engine. Luigi Menabrea, a young Italian engineer and the future Prime Minister of Italy, transcribed Babbage's lecture into French, and this transcript was subsequently published in the Bibliothèque universelle de Genève in October 1842.</p>
+
+    <p>Babbage asked Lovelace to translate Menabrea's paper into English. She completed the translation, supplementing it with an elaborate set of notes, simply called <em>Notes</em>. Lovelace spent the better part of a year doing this, assisted with input from Babbage. The notes were labeled alphabetically from A to G. In Note G, she describes an algorithm for the Analytical Engine to compute Bernoulli numbers.</p>
+
+    <p>Lovelace's notes are <mark class="flagged" data-corr="3">approximately three times the length of Menabrea's original paper<sup class="fn">3</sup></mark>, and they include detailed criticism of the engine's capability. Note G is the basis for her being credited as the first computer programmer — though that claim is itself contested.</p>
+
+    <h2 id="s3"><span class="section-anchor">§ 3</span>Death and legacy</h2>
+    <p>Lovelace died at the age of 36 on 27 November 1852, from uterine cancer probably exacerbated by bloodletting by her physicians. She left a legacy that took more than a century to be fully recognised. The <mark class="flagged approved" data-corr="4">U.S. Department of Defense computer programming language &ldquo;Ada&rdquo; was named after her in 1980<sup class="fn">4</sup></mark>.</p>
+
+    <p>The British Computer Society awards the Lovelace Medal, and a Lovelace Colloquium is held annually for women undergraduates of computer science. Ada Lovelace Day is held the second Tuesday of October to celebrate the achievements of women in <mark class="flagged approved" data-corr="5">science, technology, engineering, and mathematics<sup class="fn">5</sup></mark>.</p>
+  </article>
+
+  <aside class="marginalia">
+    <div class="marg-head">
+      <span class="marg-title">Overrides on this page</span>
+      <span class="marg-count">05</span>
+    </div>
+
+    <div class="article-score">
+      <div class="verity-stamp high" style="margin: 0;">
+        <svg class="ring" viewBox="0 0 100 100">
+          <defs>
+            <path id="circ" d="M50,50 m-40,0 a40,40 0 1,1 80,0 a40,40 0 1,1 -80,0" fill="none"/>
+          </defs>
+          <text font-family="JetBrains Mono" font-size="7" letter-spacing="2.2" fill="currentColor">
+            <textPath href="#circ">VERITY · ARTICLE-LEVEL · REV a4f2e1c · MMXXVI · </textPath>
+          </text>
+        </svg>
+        <div class="core">
+          <span class="num">82</span>
+          <span class="pct">PCT</span>
+        </div>
+      </div>
+      <div class="score-meta">
+        <span class="score-label">Article-level verity</span>
+        <span class="score-body">Composite of 5 anchored corrections, weighted by reference quality and contributor trust.</span>
+        <span class="score-stats">5 OVERRIDES · 3 APPROVED · 2 PENDING</span>
+      </div>
+    </div>
+
+    <div class="corr approved" data-corr="1">
+      <span class="corr-anchor">1</span>
+      <div class="corr-top">
+        <span class="verity-chip high"><span class="num">91</span><span>Verity</span></span>
+        <span class="pill outline-verdigris"><span class="dot"></span>Approved</span>
+      </div>
+      <div class="corr-body">Byron left England on <strong>25 April 1816</strong> — roughly four months after Ada's birth on 10 December 1815. The original phrasing was correct in spirit; this clarifies the date for citation purposes.</div>
+      <div class="corr-refs">
+        <div class="ref"><span class="ref-num">[1]</span><a href="#">MacCarthy, Fiona</a> · <em>Byron: Life and Legend</em> · Faber, 2002, p. 388</div>
+        <div class="ref"><span class="ref-num">[2]</span><a href="#">Marchand, L.</a> · <em>Byron's Letters & Journals</em>, Vol. 5</div>
+      </div>
+      <div class="corr-foot>">
+        <div class="who"><span class="avi">SO</span> s.okwu · 2026·05·17</div>
+        <span>3 supporting · 0 contra</span>
+      </div>
+    </div>
+
+    <div class="corr pending active" data-corr="2">
+      <span class="corr-anchor">2</span>
+      <div class="corr-top">
+        <span class="verity-chip med"><span class="num">64</span><span>Verity</span></span>
+        <span class="pill outline-vermilion"><span class="dot"></span>Pending</span>
+      </div>
+      <div class="corr-body"><strong>1838 is correct for the elevation;</strong> however, William King-Noel was created Earl of Lovelace specifically on <strong>30 June 1838</strong>. The article-level claim is true but uncited — adding the precise date helps the section.</div>
+      <div class="corr-refs">
+        <div class="ref"><span class="ref-num">[1]</span><a href="#">Burke's Peerage</a> · 107th ed., 2003</div>
+      </div>
+      <div class="corr-foot">
+        <div class="who"><span class="avi">HK</span> h.kovac · 2026·05·18</div>
+        <span>in moderator queue · 04:12 h</span>
+      </div>
+    </div>
+
+    <div class="corr review" data-corr="3">
+      <span class="corr-anchor">3</span>
+      <div class="corr-top">
+        <span class="verity-chip low"><span class="num">28</span><span>Verity</span></span>
+        <span class="pill"><span class="dot"></span>Needs revision</span>
+      </div>
+      <div class="corr-body"><strong>The 3× length figure is loose.</strong> By word count, Lovelace's notes are closer to <strong>2.5× the length</strong> of Menabrea's paper (Menabrea ~5,400 words; Lovelace's notes ~13,000). The 3× figure appears repeatedly but is approximate.</div>
+      <div class="corr-refs">
+        <div class="ref"><span class="ref-num">[1]</span><a href="#">Hollings, Martin & Rice</a> · <em>Ada Lovelace</em> · Bodleian, 2018, ch. 6</div>
+        <div class="ref"><span class="ref-num">[2]</span><a href="#">Original ms.</a> · British Library Add MS 37192</div>
+      </div>
+      <div class="corr-foot">
+        <div class="who"><span class="avi">PR</span> p.reyes · 2026·05·15</div>
+        <span>moderator: clarify ratio</span>
+      </div>
+    </div>
+
+    <div class="corr approved" data-corr="4">
+      <span class="corr-anchor">4</span>
+      <div class="corr-top">
+        <span class="verity-chip high"><span class="num">96</span><span>Verity</span></span>
+        <span class="pill outline-verdigris"><span class="dot"></span>Approved</span>
+      </div>
+      <div class="corr-body">The MIL-STD-1815 designation for the language Ada was assigned in <strong>December 1980</strong>; informal naming preceded this by years. The article's &ldquo;named after her in 1980&rdquo; is correct in spirit but should reference the standard.</div>
+      <div class="corr-refs">
+        <div class="ref"><span class="ref-num">[1]</span><a href="#">U.S. DoD MIL-STD-1815</a> · 10 Dec 1980</div>
+      </div>
+      <div class="corr-foot">
+        <div class="who"><span class="avi">LX</span> l.xu · 2026·05·14</div>
+        <span>5 supporting</span>
+      </div>
+    </div>
+
+    <div class="corr approved" data-corr="5">
+      <span class="corr-anchor">5</span>
+      <div class="corr-top">
+        <span class="verity-chip high"><span class="num">88</span><span>Verity</span></span>
+        <span class="pill outline-verdigris"><span class="dot"></span>Approved</span>
+      </div>
+      <div class="corr-body">Ada Lovelace Day was founded by Suw Charman-Anderson in <strong>2009</strong>. The current article omits this. Date moved to the second Tuesday of October in 2011.</div>
+      <div class="corr-refs">
+        <div class="ref"><span class="ref-num">[1]</span><a href="#">findingada.com</a> · history page (accessed 2026·04·22)</div>
+      </div>
+      <div class="corr-foot">
+        <div class="who"><span class="avi">AM</span> a.morisot · 2026·05·11</div>
+        <span>2 supporting</span>
+      </div>
+    </div>
+
+    <div class="sheet corner-mark lift" style="padding: 18px; margin-top: 14px;">
+      <div class="eyebrow"><span class="dot"></span>Want a section corrected?</div>
+      <p class="serif-body mt-3" style="font-size:14.5px; line-height:1.5;">Tap any paragraph in the article to propose a correction. Authoring requires a contributor account (closed beta).</p>
+      <a class="btn btn-secondary mt-4" href="editor.html">Open editor <span class="arrow">→</span></a>
+    </div>
+  </aside>
+
+</main>
+
+<button class="flag-fab" title="Flag this article for review (anonymous)">
+  <span class="icn">⚑</span> Flag for review
+</button>
+
+<footer class="ledger-foot">
+  <div>READ-PATH · P95 2.41s · CACHE HIT · PROXY VIA ORD1</div>
+  <div>ANCHORED CORRECTIONS · 5 · SNAPSHOT 24kb (zstd · 6×)</div>
+  <div>WCAG 2.2 AA · CSP STRICT</div>
+</footer>
+
+<script>
+  // simple click-through: clicking inline marks highlights the matching margin card
+  document.querySelectorAll('mark.flagged').forEach(m => {
+    m.addEventListener('click', () => {
+      const id = m.dataset.corr;
+      document.querySelectorAll('mark.flagged').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.corr').forEach(x => x.classList.remove('active'));
+      m.classList.add('active');
+      const target = document.querySelector('.corr[data-corr="' + id + '"]');
+      if (target) {
+        target.classList.add('active');
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+  document.querySelectorAll('.corr').forEach(c => {
+    c.addEventListener('click', () => {
+      const id = c.dataset.corr;
+      const mark = document.querySelector('mark.flagged[data-corr="' + id + '"]');
+      if (mark) {
+        document.querySelectorAll('mark.flagged').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.corr').forEach(x => x.classList.remove('active'));
+        mark.classList.add('active');
+        c.classList.add('active');
+        mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

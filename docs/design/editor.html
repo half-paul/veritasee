@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Editor — Veritasee Override</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  /* sub-strip with submission state machine */
+  .state-strip {
+    background: var(--paper);
+    border-bottom: var(--rule-w) solid var(--rule);
+    padding: 14px 32px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: center;
+  }
+  .state-machine {
+    display: flex; align-items: center; gap: 0;
+    font-family: var(--ui);
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .state-machine .st {
+    padding: 6px 14px 6px 22px;
+    background: var(--paper-deep); color: var(--ink-mute);
+    position: relative;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%, 10px 50%);
+    margin-right: -6px;
+  }
+  .state-machine .st:first-child { clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%); padding-left: 16px; }
+  .state-machine .st:last-child  { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 10px 50%); margin-right: 0; }
+  .state-machine .st.done   { background: var(--ink); color: var(--paper); }
+  .state-machine .st.now    { background: var(--vermilion); color: var(--paper); }
+  .state-machine .st.next   { background: var(--paper-deep); color: var(--ink-soft); }
+
+  .state-strip .meta {
+    display: flex; gap: 18px; align-items: center;
+    font-family: var(--mono); font-size: 11px; color: var(--ink-mute);
+  }
+  .state-strip .meta .pip { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--verdigris); margin-right: 6px; }
+
+  /* main 3-col layout */
+  .desk {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 380px;
+    min-height: calc(100vh - 130px);
+    border-bottom: var(--rule-w) solid var(--rule);
+  }
+  .desk > section { padding: 28px 32px; border-right: var(--rule-w) solid var(--rule); }
+  .desk > section:last-child { border-right: 0; }
+
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: var(--rule-w) solid var(--rule);
+    margin-bottom: 18px;
+  }
+  .panel-head h3 {
+    font-size: 22px;
+    font-variation-settings: 'opsz' 36, 'SOFT' 50, 'WONK' 1;
+    line-height: 1;
+  }
+  .panel-head .panel-tag {
+    font-family: var(--ui); font-size: 10px;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ink-mute); font-weight: 700;
+  }
+
+  /* SOURCE column */
+  .source-context {
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    background: var(--paper-deep);
+    border: var(--rule-w) solid var(--rule);
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-soft); line-height: 1.55;
+  }
+  .source-context .row { display: flex; gap: 8px; }
+  .source-context .lbl { color: var(--ink-mute); width: 76px; flex-shrink: 0; }
+  .source-context a { color: var(--lapis); text-decoration: none; border-bottom: 1px solid var(--lapis); }
+
+  .source-paragraph {
+    font-family: var(--reading);
+    font-variation-settings: 'opsz' 24;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--ink);
+    padding: 20px 22px;
+    background: var(--paper);
+    border-left: 4px solid var(--ink);
+    margin-bottom: 16px;
+  }
+  .source-paragraph mark.target {
+    background: var(--ochre-soft);
+    color: var(--ink);
+    padding: 0 4px;
+  }
+
+  .anchor-box {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+    background: var(--paper);
+    border: var(--rule-w) solid var(--rule);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .anchor-box .anchor-title {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+    font-family: var(--ui); font-size: 10px; font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ink);
+  }
+  .anchor-box code {
+    color: var(--vermilion);
+    word-break: break-all;
+    display: inline-block;
+    padding: 1px 5px;
+    background: rgba(200,51,28,0.08);
+    border: var(--rule-w) solid rgba(200,51,28,0.2);
+    margin: 1px 0;
+  }
+  .anchor-box .pair { display: grid; grid-template-columns: 80px 1fr; gap: 8px; }
+
+  /* EDITOR column */
+  .editor-toolbar {
+    display: flex; align-items: center; gap: 4px;
+    border: var(--rule-w) solid var(--rule);
+    padding: 6px 8px;
+    margin-bottom: -1px;
+    background: var(--paper-deep);
+  }
+  .editor-toolbar .tb-btn {
+    background: transparent; border: 0;
+    padding: 6px 10px;
+    font-family: var(--display);
+    font-size: 16px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    border-radius: var(--r-sm);
+  }
+  .editor-toolbar .tb-btn:hover { background: var(--paper); color: var(--ink); }
+  .editor-toolbar .tb-btn.active { background: var(--ink); color: var(--paper); }
+  .editor-toolbar .tb-btn.italic { font-style: italic; }
+  .editor-toolbar .tb-btn.bold { font-variation-settings: 'wght' 700; }
+  .editor-toolbar .tb-sep { width: 1px; height: 18px; background: var(--rule); margin: 0 4px; }
+  .editor-toolbar .tb-label {
+    font-family: var(--ui); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink-mute); margin-left: auto;
+  }
+
+  .editor-surface {
+    border: var(--rule-w) solid var(--rule);
+    padding: 18px 20px;
+    min-height: 220px;
+    background: var(--paper);
+    background-image:
+      repeating-linear-gradient(180deg, transparent 0 27px, var(--rule-hair) 27px 27.5px);
+    font-family: var(--reading);
+    font-variation-settings: 'opsz' 18;
+    font-size: 17px;
+    line-height: 1.62;
+    color: var(--ink);
+    outline: none;
+  }
+  .editor-surface:focus { border-color: var(--vermilion); }
+  .editor-surface p + p { margin-top: 10px; }
+  .editor-surface .citation-tag {
+    display: inline-block;
+    padding: 0 6px;
+    background: var(--lapis);
+    color: var(--paper);
+    font-family: var(--mono); font-size: 11px;
+    border-radius: 999px;
+    vertical-align: 2px;
+    margin: 0 2px;
+  }
+
+  /* Verity slider */
+  .verity-field {
+    margin-top: 22px;
+    padding: 18px 0 0;
+    border-top: var(--rule-w) solid var(--rule);
+  }
+  .verity-field .vf-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .verity-field .vf-head .num {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 96, 'SOFT' 70, 'WONK' 1, 'wght' 500;
+    font-size: 56px; line-height: 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ochre);
+    transition: color .2s;
+  }
+  .verity-field .vf-head .num .sup {
+    font-family: var(--mono); font-size: 14px;
+    color: var(--ink-mute);
+    letter-spacing: 0.14em;
+  }
+
+  /* the slider track with editorial tickmarks */
+  .verity-track {
+    position: relative; height: 38px;
+    background: linear-gradient(to right,
+      var(--vermilion) 0%, var(--vermilion) 33%,
+      var(--ochre) 33%, var(--ochre) 66%,
+      var(--verdigris) 66%, var(--verdigris) 100%);
+    border: var(--rule-w-bold) solid var(--ink);
+  }
+  .verity-track .tick {
+    position: absolute; top: 0; bottom: 0;
+    width: 1px;
+    background: rgba(26,20,12,0.35);
+  }
+  .verity-track .knob {
+    position: absolute;
+    top: 50%;
+    width: 18px; height: 48px;
+    background: var(--paper);
+    border: var(--rule-w-bold) solid var(--ink);
+    transform: translate(-50%, -50%);
+    cursor: ew-resize;
+    box-shadow: 0 1px 0 rgba(26,20,12,0.2);
+  }
+  .verity-track .knob::after {
+    content: ''; position: absolute;
+    top: 8px; bottom: 8px; left: 50%;
+    width: 1px; background: var(--ink);
+  }
+  .verity-track .knob-num {
+    position: absolute;
+    bottom: -28px;
+    left: 50%; transform: translateX(-50%);
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink); white-space: nowrap;
+    background: var(--ink); color: var(--paper);
+    padding: 2px 6px;
+    letter-spacing: 0.06em;
+  }
+  .verity-tick-labels {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(11, 1fr);
+    font-family: var(--mono); font-size: 9px;
+    color: var(--ink-mute);
+    text-align: center;
+  }
+
+  .rationale {
+    margin-top: 22px;
+  }
+  .rationale textarea {
+    min-height: 90px;
+  }
+  .rationale .char-count {
+    margin-top: 6px;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mute);
+    display: flex; justify-content: space-between;
+  }
+  .rationale .char-count .ok { color: var(--verdigris); }
+
+  /* References */
+  .refs {
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: var(--rule-w) solid var(--rule);
+  }
+  .ref-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+  .ref-row {
+    border: var(--rule-w) solid var(--rule);
+    padding: 12px 14px;
+    background: var(--paper);
+    display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+    transition: border-color .15s;
+  }
+  .ref-row:hover { border-color: var(--ink); }
+  .ref-row .ref-state {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--display); font-size: 12px;
+    font-variation-settings: 'wght' 600;
+    color: var(--paper); flex-shrink: 0;
+  }
+  .ref-row .ref-state.ok { background: var(--verdigris); }
+  .ref-row .ref-state.warn { background: var(--ochre); color: var(--ink); }
+  .ref-row .ref-state.err { background: var(--vermilion); }
+  .ref-row .ref-body {
+    font-family: var(--reading);
+    font-size: 14.5px; line-height: 1.45;
+  }
+  .ref-row .ref-body .title { font-weight: 500; }
+  .ref-row .ref-body .url {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-mute); margin-top: 2px;
+  }
+  .ref-row .ref-body .url a { color: var(--lapis); text-decoration: none; border-bottom: 1px solid var(--lapis); }
+  .ref-row .ref-meta {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mute); text-align: right; line-height: 1.5;
+  }
+
+  .ref-add {
+    display: grid; grid-template-columns: 1fr auto; gap: 12px;
+    margin-top: 14px;
+  }
+
+  /* AI VERIFY column */
+  .ai-panel {
+    display: flex; flex-direction: column; gap: 18px;
+    background: var(--paper);
+  }
+  .ai-scenario {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: var(--rule-w) solid var(--rule);
+  }
+  .ai-scenario .scen {
+    padding: 12px 14px;
+    border-left: var(--rule-w) solid var(--rule);
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .ai-scenario .scen:first-child { border-left: 0; }
+  .ai-scenario .scen:hover { background: var(--paper-deep); }
+  .ai-scenario .scen.active { background: var(--ink); color: var(--paper); }
+  .ai-scenario .scen.active .scen-name { color: var(--paper); }
+  .ai-scenario .scen.active .scen-cost { color: var(--ochre-soft); }
+  .ai-scenario .scen-name {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 24, 'WONK' 1;
+    font-size: 18px;
+    line-height: 1; margin-bottom: 6px;
+  }
+  .ai-scenario .scen-desc {
+    font-family: var(--reading); font-size: 12px; line-height: 1.4;
+    color: var(--ink-mute);
+  }
+  .ai-scenario .scen.active .scen-desc { color: rgba(242,237,226,0.7); }
+  .ai-scenario .scen-cost {
+    margin-top: 6px;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--vermilion);
+    letter-spacing: 0.1em;
+  }
+
+  .verify-cta {
+    display: flex; align-items: stretch;
+    border: var(--rule-w-bold) solid var(--ink);
+    background: var(--ink);
+  }
+  .verify-cta .vlabel {
+    padding: 14px 18px;
+    flex: 1;
+  }
+  .verify-cta .vlabel .who {
+    font-family: var(--ui); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ochre-soft); font-weight: 700;
+  }
+  .verify-cta .vlabel .what {
+    font-family: var(--display);
+    font-variation-settings: 'opsz' 24, 'WONK' 1, 'wght' 500;
+    font-size: 18px; color: var(--paper);
+    margin-top: 2px;
+  }
+  .verify-cta button {
+    padding: 14px 22px;
+    background: var(--vermilion); color: var(--paper);
+    border: 0; border-left: var(--rule-w-bold) solid var(--ink);
+    font-family: var(--ui); font-size: 12px; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .verify-cta button:hover { background: var(--vermilion-deep); }
+
+  .quota-meter {
+    padding: 12px 14px;
+    background: var(--paper);
+    border: var(--rule-w) solid var(--rule);
+  }
+  .quota-meter .qm-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--ui); font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700; color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .quota-meter .qm-bar {
+    height: 6px; background: var(--paper-deep);
+    border: var(--rule-w) solid var(--rule);
+    position: relative;
+  }
+  .quota-meter .qm-fill {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    background: var(--ochre);
+    width: 60%;
+  }
+  .quota-meter .qm-meta {
+    margin-top: 8px;
+    font-family: var(--mono); font-size: 10.5px;
+    display: flex; justify-content: space-between;
+  }
+  .quota-meter .qm-meta .nums { color: var(--ink); }
+  .quota-meter .qm-meta .reset { color: var(--ink-mute); }
+
+  /* Evidence trail */
+  .evidence {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .evd-head {
+    display: flex; align-items: baseline; gap: 8px;
+    font-family: var(--ui); font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700;
+  }
+  .evd-head.support { color: var(--verdigris); }
+  .evd-head.contra { color: var(--vermilion); }
+  .evd-head .count {
+    background: currentColor; color: var(--paper);
+    font-size: 10px; padding: 2px 7px;
+    border-radius: 999px; letter-spacing: 0.1em;
+    font-variation-settings: normal;
+  }
+
+  .evd-card {
+    border: var(--rule-w) solid var(--rule);
+    background: var(--paper);
+    padding: 12px 14px;
+    position: relative;
+    transition: border-color .15s, transform .15s;
+  }
+  .evd-card:hover { border-color: var(--ink); transform: translateX(-1px); }
+  .evd-card.support { border-left: 3px solid var(--verdigris); }
+  .evd-card.contra { border-left: 3px solid var(--vermilion); }
+
+  .evd-card .evd-source {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .evd-card .evd-source .src {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--lapis); letter-spacing: 0.04em;
+    text-decoration: none; border-bottom: 1px solid var(--lapis);
+  }
+  .evd-card .evd-source .rel {
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-mute);
+  }
+  .evd-card .evd-source .rel .pct {
+    color: var(--ink); font-weight: 700;
+  }
+  .evd-card .evd-snippet {
+    font-family: var(--reading); font-style: italic;
+    font-variation-settings: 'opsz' 14;
+    font-size: 13.5px; line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  .evd-card .evd-actions {
+    margin-top: 8px; display: flex; gap: 8px;
+  }
+  .evd-card .evd-actions button {
+    font-family: var(--ui); font-size: 9.5px;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    font-weight: 700; padding: 4px 8px;
+    background: transparent; border: var(--rule-w) solid var(--rule);
+    cursor: pointer;
+    color: var(--ink-soft);
+  }
+  .evd-card .evd-actions button:hover { border-color: var(--ink); color: var(--ink); }
+  .evd-card .evd-actions button.staged { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+  /* AI synthesis box */
+  .synthesis {
+    border: var(--rule-w-bold) dashed var(--ochre);
+    background: rgba(184, 132, 43, 0.05);
+    padding: 14px 16px;
+    position: relative;
+  }
+  .synthesis::before {
+    content: 'AI · STAGED · NOT FOR PUBLICATION';
+    position: absolute; top: -10px; left: 12px;
+    background: var(--paper);
+    padding: 0 8px;
+    font-family: var(--mono); font-size: 9.5px;
+    letter-spacing: 0.18em; color: var(--ochre);
+    font-weight: 700;
+  }
+  .synthesis .syn-body {
+    font-family: var(--reading); font-style: italic;
+    font-size: 13.5px; line-height: 1.55;
+    color: var(--ink);
+  }
+
+  /* AI publishes-nothing gate */
+  .review-gate {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border: var(--rule-w-bold) solid var(--ink);
+    background: var(--paper-deep);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .review-gate .cbx {
+    width: 22px; height: 22px;
+    border: var(--rule-w-bold) solid var(--ink);
+    background: var(--paper);
+    display: grid; place-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .review-gate.checked .cbx {
+    background: var(--ink); color: var(--paper);
+  }
+  .review-gate.checked .cbx::after {
+    content: '✓'; font-family: var(--display);
+    font-size: 16px; font-variation-settings: 'wght' 700;
+  }
+  .review-gate .gate-text {
+    font-family: var(--reading); font-size: 13.5px; line-height: 1.5;
+  }
+  .review-gate .gate-text strong { color: var(--vermilion); }
+
+  /* footer action bar */
+  .submit-bar {
+    position: sticky; bottom: 0;
+    background: var(--paper);
+    border-top: var(--rule-w-bold) solid var(--ink);
+    padding: 16px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px;
+    z-index: 30;
+  }
+  .submit-bar .save-info {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-mute);
+  }
+  .submit-bar .save-info .pip {
+    display: inline-block; width: 6px; height: 6px;
+    border-radius: 50%; background: var(--verdigris);
+    margin-right: 6px; animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  @media (max-width: 1180px) {
+    .desk { grid-template-columns: 1fr; }
+    .desk > section { border-right: 0; border-bottom: var(--rule-w) solid var(--rule); }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="brand">
+    <span class="brand-mark">Veritasee<sup>°</sup></span>
+    <span class="brand-tag">Override · Editor</span>
+  </div>
+  <nav>
+    <a href="landing.html">Read</a>
+    <a href="editor.html" class="active">Contribute</a>
+    <a href="moderator.html">Moderate</a>
+    <a href="dashboard.html">Ledger</a>
+  </nav>
+  <div class="meta">
+    <span>P.REYES · TRUST 247</span>
+    <span class="sep">·</span>
+    <span>QUOTA · 4 / 10</span>
+  </div>
+</header>
+
+<div class="state-strip">
+  <div class="state-machine">
+    <span class="st done">Draft</span>
+    <span class="st now">Submitted</span>
+    <span class="st next">Approved</span>
+    <span class="st next">Rejected</span>
+    <span class="st next">Needs revision</span>
+  </div>
+  <div class="meta">
+    <span><span class="pip"></span>Autosaved · 2026·05·18 09:42:01</span>
+    <span>·</span>
+    <span>Correction-ID · <code>c_3kx8w2</code></span>
+    <span>·</span>
+    <span>Snapshot · <code>a4f2e1c</code></span>
+  </div>
+</div>
+
+<main class="desk">
+
+  <!-- SOURCE COLUMN -->
+  <section class="reveal delay-0">
+    <div class="panel-head">
+      <h3>Source paragraph</h3>
+      <span class="panel-tag">Read-only · Snapshot-pinned</span>
+    </div>
+
+    <div class="source-context">
+      <div class="row"><span class="lbl">Article</span><a href="#">Ada Lovelace · en.wikipedia.org</a></div>
+      <div class="row"><span class="lbl">Section</span>Work on the Analytical Engine · ¶ 3</div>
+      <div class="row"><span class="lbl">Detector</span>MediaWiki API (clean structure)</div>
+      <div class="row"><span class="lbl">Fetched</span>2026·05·15 11:08 UTC</div>
+    </div>
+
+    <p class="source-paragraph">Lovelace's notes are <mark class="target">approximately three times the length of Menabrea's original paper</mark>, and they include detailed criticism of the engine's capability. Note G is the basis for her being credited as the first computer programmer — though that claim is itself contested.</p>
+
+    <div class="anchor-box">
+      <div class="anchor-title">
+        <span>§ Text-fragment anchor</span>
+        <span class="pill outline-verdigris" style="font-size:9px; padding:2px 7px;"><span class="dot"></span>Valid</span>
+      </div>
+      <div class="pair">
+        <span>prefix</span><code>Lovelace's notes are </code>
+        <span>start</span><code>approximately three times the length</code>
+        <span>end</span><code>of Menabrea's original paper</code>
+        <span>suffix</span><code>, and they include detailed</code>
+        <span>hash</span><code>sha256:a4f2e1c83b…</code>
+      </div>
+    </div>
+
+    <div class="sheet corner-mark" style="padding: 14px 16px;">
+      <div class="eyebrow"><span class="dot"></span>Anchor diagnostics</div>
+      <p class="mt-3" style="font-family: var(--reading); font-size:13.5px; line-height:1.55; color:var(--ink-soft);">
+        Anchor is unique in source (1 match). Survives ≤ 12 character edits before fuzzy re-anchor kicks in. Snapshot pin guarantees fallback if the source is rewritten.
+      </p>
+    </div>
+  </section>
+
+  <!-- CORRECTION COLUMN -->
+  <section class="reveal delay-1">
+    <div class="panel-head">
+      <h3>Your correction</h3>
+      <span class="panel-tag">Markdown · stored canonically</span>
+    </div>
+
+    <div class="editor-toolbar">
+      <button class="tb-btn bold">B</button>
+      <button class="tb-btn italic">i</button>
+      <button class="tb-btn">&ldquo;&rdquo;</button>
+      <span class="tb-sep"></span>
+      <button class="tb-btn">¶</button>
+      <button class="tb-btn">§</button>
+      <button class="tb-btn active">[ ]</button>
+      <span class="tb-label">Inline citation</span>
+    </div>
+
+    <div class="editor-surface" contenteditable="true" spellcheck="false">
+      <p>By word count, Lovelace's notes are closer to <strong>2.5× the length</strong> of Menabrea's paper, not 3×. Menabrea's <em>Notions sur la machine analytique</em> runs roughly <strong>5,400 words</strong>; Lovelace's Notes A–G together total approximately <strong>13,000 words</strong> <span class="citation-tag">[1]</span>.</p>
+      <p>The 3× figure appears repeatedly in secondary literature but appears to originate from a single 1979 paraphrase that has been re-cited without re-measurement <span class="citation-tag">[2]</span>. The British Library's manuscript catalogue gives the original wordcount estimates used here.</p>
+    </div>
+
+    <!-- Verity Score -->
+    <div class="verity-field">
+      <div class="vf-head">
+        <div>
+          <div class="eyebrow" style="margin-bottom:6px;"><span class="dot"></span>Verity score · this section</div>
+          <span style="font-family:var(--reading); font-size:14px; color:var(--ink-mute);">How accurate is the source paragraph, in your judgment?</span>
+        </div>
+        <div class="num"><span>72</span><span class="sup">/100</span></div>
+      </div>
+
+      <div class="verity-track">
+        <span class="tick" style="left: 10%;"></span>
+        <span class="tick" style="left: 20%;"></span>
+        <span class="tick" style="left: 30%;"></span>
+        <span class="tick" style="left: 40%;"></span>
+        <span class="tick" style="left: 50%;"></span>
+        <span class="tick" style="left: 60%;"></span>
+        <span class="tick" style="left: 70%;"></span>
+        <span class="tick" style="left: 80%;"></span>
+        <span class="tick" style="left: 90%;"></span>
+        <span class="knob" style="left: 72%;">
+          <span class="knob-num">72%</span>
+        </span>
+      </div>
+      <div class="verity-tick-labels">
+        <span>0</span><span></span><span>20</span><span></span><span>40</span><span></span><span>60</span><span></span><span>80</span><span></span><span>100</span>
+      </div>
+
+      <div class="rationale">
+        <div class="eyebrow" style="margin-bottom:8px;"><span class="dot"></span>Rationale · required, ≥ 40 chars</div>
+        <textarea class="input">Original section is mostly accurate but the 3× wordcount figure is sloppy and frequently re-cited without re-measurement. Adjusting to 2.5× brings claim in line with primary manuscript count.</textarea>
+        <div class="char-count">
+          <span class="ok">202 / 40 minimum</span>
+          <span>~ 38 sec to compose</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- References -->
+    <div class="refs">
+      <div class="row between baseline">
+        <div class="eyebrow"><span class="dot"></span>References · ≥ 1 required</div>
+        <span class="pill outline-verdigris"><span class="dot"></span>2 of ≥ 1</span>
+      </div>
+
+      <div class="ref-list">
+        <div class="ref-row">
+          <span class="ref-state ok">✓</span>
+          <div class="ref-body">
+            <div class="title">Hollings, Martin & Rice — <em>Ada Lovelace: The Making of a Computer Scientist</em></div>
+            <div class="url"><a href="#">https://bodleian.ox.ac.uk/ada-lovelace · ch. 6 §3</a></div>
+          </div>
+          <div class="ref-meta">
+            <div>2018 · BODLEIAN</div>
+            <div>HTTP 200 · 184 ms</div>
+            <div>Non-encyclopedia ✓</div>
+          </div>
+        </div>
+        <div class="ref-row">
+          <span class="ref-state ok">✓</span>
+          <div class="ref-body">
+            <div class="title">British Library — <em>Original manuscript, Add MS 37192</em></div>
+            <div class="url"><a href="#">DOI 10.34055/bl.add.37192</a></div>
+          </div>
+          <div class="ref-meta">
+            <div>1843 · MANUSCRIPT</div>
+            <div>DOI resolved ✓</div>
+            <div>Primary source ✓</div>
+          </div>
+        </div>
+        <div class="ref-row" style="border-style: dashed; opacity: 0.7;">
+          <span class="ref-state warn">!</span>
+          <div class="ref-body">
+            <div class="title">en.wikipedia.org · Analytical Engine</div>
+            <div class="url" style="color: var(--vermilion);">Rejected · same encyclopedia domain as source article</div>
+          </div>
+          <div class="ref-meta">
+            <div>BLOCKED</div>
+            <div>Policy FR-CE-3</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ref-add">
+        <input class="input" type="url" placeholder="Paste URL, DOI, or ISBN to add a reference …" />
+        <button class="btn btn-secondary">Validate & add</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI VERIFY COLUMN -->
+  <aside class="reveal delay-2" style="background: var(--paper-deep);">
+    <div class="panel-head">
+      <h3>Verify with AI</h3>
+      <span class="panel-tag">Agent-on-demand</span>
+    </div>
+
+    <div class="ai-panel">
+
+      <!-- scenarios -->
+      <div>
+        <div class="eyebrow" style="margin-bottom:10px;"><span class="dot"></span>Scenario preset</div>
+        <div class="ai-scenario">
+          <div class="scen">
+            <div class="scen-name">Fast check</div>
+            <div class="scen-desc">Small model · single web pass</div>
+            <div class="scen-cost">~ $0.004 · 8s</div>
+          </div>
+          <div class="scen active">
+            <div class="scen-name">Academic</div>
+            <div class="scen-desc">+ Semantic Scholar · CrossRef</div>
+            <div class="scen-cost">~ $0.082 · 28s</div>
+          </div>
+          <div class="scen">
+            <div class="scen-name">Adversarial</div>
+            <div class="scen-desc">Separate pro/contra · reconcile</div>
+            <div class="scen-cost">~ $0.220 · 45s</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- provider + verify cta -->
+      <div class="verify-cta">
+        <div class="vlabel">
+          <div class="who">Provider</div>
+          <div class="what">Anthropic · Claude Opus 4.7</div>
+        </div>
+        <button>Run verify</button>
+      </div>
+
+      <!-- quota -->
+      <div class="quota-meter">
+        <div class="qm-head">
+          <span>AI quota · today</span>
+          <span style="color: var(--ochre);">6 left</span>
+        </div>
+        <div class="qm-bar"><div class="qm-fill"></div></div>
+        <div class="qm-meta">
+          <span class="nums">4 / 10 deep · 12 / 50 fast</span>
+          <span class="reset">resets 00:00 UTC</span>
+        </div>
+      </div>
+
+      <!-- evidence trail -->
+      <div class="evidence">
+        <div class="evd-head support">
+          <span>Supporting</span>
+          <span class="count">3</span>
+          <span style="color: var(--ink-mute); letter-spacing: 0.08em; font-weight: 500;">↳ 2 staged into editor</span>
+        </div>
+
+        <div class="evd-card support">
+          <div class="evd-source">
+            <a class="src" href="#">bodleian.ox.ac.uk / ada-lovelace</a>
+            <span class="rel">rel · <span class="pct">94%</span></span>
+          </div>
+          <div class="evd-snippet">&ldquo;…the final published version of Lovelace's translation and Notes runs to <strong>roughly two and a half times the original</strong>, by Menabrea's own wordcount in his collected works (BL Add MS 37192).&rdquo;</div>
+          <div class="evd-actions">
+            <button class="staged">Staged · [1]</button>
+            <button>View full</button>
+          </div>
+        </div>
+
+        <div class="evd-card support">
+          <div class="evd-source">
+            <a class="src" href="#">semanticscholar.org / paper / S2-Lovelace-2018</a>
+            <span class="rel">rel · <span class="pct">88%</span></span>
+          </div>
+          <div class="evd-snippet">&ldquo;Hollings et al. report Notes A–G aggregate to ~13,000 English words against ~5,400 in Menabrea's French original; the popular 'three times' figure overstates this by ~20%.&rdquo;</div>
+          <div class="evd-actions">
+            <button class="staged">Staged · [2]</button>
+            <button>View full</button>
+          </div>
+        </div>
+
+        <div class="evd-card support">
+          <div class="evd-source">
+            <a class="src" href="#">jstor.org / 41138723</a>
+            <span class="rel">rel · <span class="pct">71%</span></span>
+          </div>
+          <div class="evd-snippet">&ldquo;Stein (1985) explicitly measures Lovelace's expansion as 'between 2.4 and 2.6 times the source, depending on whether footnotes are counted'…&rdquo;</div>
+          <div class="evd-actions">
+            <button>Stage as ref</button>
+            <button>View full</button>
+          </div>
+        </div>
+
+        <div class="evd-head contra mt-4">
+          <span>Contradicting</span>
+          <span class="count">1</span>
+        </div>
+
+        <div class="evd-card contra">
+          <div class="evd-source">
+            <a class="src" href="#">computerhistory.org / ada-lovelace-bicentennial</a>
+            <span class="rel">rel · <span class="pct">58%</span></span>
+          </div>
+          <div class="evd-snippet">&ldquo;Modern commentators consistently describe Lovelace's Notes as <strong>three times the length</strong> of the Menabrea memoir…&rdquo;
+            <span style="display:block; margin-top:6px; color:var(--ink-mute); font-style:normal; font-family:var(--mono); font-size:10px;">(secondary; appears to inherit from same 1979 paraphrase)</span></div>
+          <div class="evd-actions">
+            <button>Address in rationale</button>
+            <button>Dismiss</button>
+          </div>
+        </div>
+
+        <!-- AI synthesis -->
+        <div class="synthesis mt-4">
+          <div class="syn-body">
+            Primary-source measurements (BL Add MS 37192; Stein 1985; Hollings et al. 2018) consistently place Lovelace's expansion at 2.4–2.6×. The popular &ldquo;three times&rdquo; figure traces to a single 1979 paraphrase that has propagated without re-measurement. The correction is well-supported; recommend specifying the wordcounts in the body to disarm future re-citation.
+          </div>
+        </div>
+
+        <!-- ai-publishes-nothing gate -->
+        <div class="review-gate checked">
+          <div class="cbx"></div>
+          <div class="gate-text">
+            <strong>FR-AI-4 · AI never publishes.</strong> I have reviewed and edited the staged AI evidence and synthesis before this submission. The published text is my own.
+          </div>
+        </div>
+
+        <!-- cost telemetry -->
+        <div class="quota-meter mt-3">
+          <div class="qm-head">
+            <span>This run · cost telemetry</span>
+            <span style="color: var(--verdigris);">recorded</span>
+          </div>
+          <div class="qm-meta" style="margin-top:0;">
+            <span class="nums">14,082 in · 1,840 out · $0.078</span>
+            <span class="reset">28.4s · Claude Opus 4.7</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+</main>
+
+<div class="submit-bar">
+  <div class="save-info">
+    <span class="pip"></span>Autosaved 4 sec ago · DRAFT · 247 trust pts · resubmit if rejected within 7 days
+  </div>
+  <div class="row gap-3">
+    <button class="btn btn-ghost">Save draft</button>
+    <button class="btn btn-secondary">Preview as reader</button>
+    <button class="btn btn-vermilion">Submit for review <span class="arrow">→</span></button>
+  </div>
+</div>
+
+<script>
+  // verity slider knob
+  const track = document.querySelector('.verity-track');
+  const knob = track && track.querySelector('.knob');
+  const num = document.querySelector('.vf-head .num span:first-child');
+  const knobNum = track && track.querySelector('.knob-num');
+  function setPct(p) {
+    if (!track || !knob) return;
+    p = Math.max(0, Math.min(100, p));
+    knob.style.left = p + '%';
+    knobNum.textContent = Math.round(p) + '%';
+    num.textContent = Math.round(p);
+    // color shifts
+    const color = p < 33 ? 'var(--vermilion)' : p < 66 ? 'var(--ochre)' : 'var(--verdigris)';
+    document.querySelector('.vf-head .num').style.color = color;
+  }
+  if (track) {
+    let dragging = false;
+    const onMove = (e) => {
+      if (!dragging) return;
+      const rect = track.getBoundingClientRect();
+      const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+      setPct((x / rect.width) * 100);
+    };
+    knob.addEventListener('mousedown', () => dragging = true);
+    track.addEventListener('mousedown', (e) => {
+      dragging = true; onMove(e);
+    });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', () => dragging = false);
+  }
+
+  // review gate toggle
+  const gate = document.querySelector('.review-gate');
+  if (gate) gate.addEventListener('click', () => gate.classList.toggle('checked'));
+
+  // scenario picker
+  document.querySelectorAll('.ai-scenario .scen').forEach(s => {
+    s.addEventListener('click', () => {
+      document.querySelectorAll('.ai-scenario .scen').forEach(x => x.classList.remove('active'));
+      s.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
